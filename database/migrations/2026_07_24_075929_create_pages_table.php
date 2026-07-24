@@ -13,16 +13,13 @@ return new class extends Migration
     {
         Schema::create('pages', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->json('title');
-            $table->string('slug');
+            $table->string('slug')->unique();
             $table->json('content');
             $table->string('status')->default('draft'); // draft, published
             $table->json('meta_title')->nullable();
             $table->json('meta_description')->nullable();
             $table->timestamps();
-
-            $table->unique(['tenant_id', 'slug']);
         });
     }
 

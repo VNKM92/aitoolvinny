@@ -2,16 +2,15 @@
 
 namespace App\Models;
 
-use App\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Page extends Model
 {
-    use HasFactory, BelongsToTenant;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id',
         'title',
         'slug',
         'content',

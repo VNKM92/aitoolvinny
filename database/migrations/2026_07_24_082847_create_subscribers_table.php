@@ -11,11 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tenant_domains', function (Blueprint $table) {
+        Schema::create('subscribers', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
-            $table->string('domain')->unique();
-            $table->boolean('is_primary')->default(false);
+            $table->string('email')->unique();
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }
@@ -25,6 +24,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tenant_domains');
+        Schema::dropIfExists('subscribers');
     }
 };

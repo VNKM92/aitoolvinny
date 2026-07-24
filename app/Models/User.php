@@ -2,47 +2,26 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Traits\BelongsToTenant;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, BelongsToTenant;
+    use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
-        'tenant_id',
         'name',
         'email',
         'password',
         'role',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -52,18 +31,26 @@ class User extends Authenticatable
     }
 
     /**
-     * Check if the user is a super admin.
+     * Check if the user is an administrator.
      */
-    public function isSuperAdmin(): bool
+    public function isAdmin(): bool
     {
-        return $this->role === 'super_admin';
+        return $this->role === 'administrator';
     }
 
     /**
-     * Check if the user is a tenant admin.
+     * Check if the user is an editor.
      */
-    public function isTenantAdmin(): bool
+    public function isEditor(): bool
     {
-        return $this->role === 'tenant_admin';
+        return in_array($this->role, ['administrator', 'editor']);
+    }
+
+    /**
+     * Check if the user is an author.
+     */
+    public function isAuthor(): bool
+    {
+        return in_array($this->role, ['administrator', 'editor', 'author']);
     }
 }

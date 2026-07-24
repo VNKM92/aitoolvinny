@@ -2,8 +2,8 @@
 
 namespace App\Livewire\Admin;
 
-use App\Models\Tenant;
-use App\Services\TenantManager;
+use App\Services\SiteSettings;
+use App\Services\ActivityLogger;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -41,23 +41,16 @@ class Settings extends Component
 
     public function mount()
     {
-        $tenant = app(TenantManager::class)->getTenant();
+        $this->siteName = SiteSettings::get('site_name', 'My CMS Website');
+        $this->defaultLocale = SiteSettings::get('default_locale', 'en');
+        $this->supportedLocales = SiteSettings::get('supported_locales', ['en']);
+        $this->metaDescription = SiteSettings::get('meta_description', '');
+        $this->existingLogo = SiteSettings::get('logo', '');
         
-        if (!$tenant) {
-            return redirect()->route('admin.dashboard');
-        }
-
-        $this->siteName = $tenant->name;
-        $this->defaultLocale = $tenant->default_locale;
-        $this->supportedLocales = $tenant->supported_locales ?? [$tenant->default_locale];
-
-        $settings = $tenant->settings;
-        $this->metaDescription = $settings['meta_description'] ?? '';
-        $this->existingLogo = $settings['logo'] ?? '';
-        $this->adsenseClientId = $settings['adsense_client_id'] ?? '';
-        $this->adsenseTopSlot = $settings['adsense_top_slot'] ?? '';
-        $this->adsenseSidebarSlot = $settings['adsense_sidebar_slot'] ?? '';
-        $this->adsenseArticleSlot = $settings['adsense_article_slot'] ?? '';
+        $this->adsenseClientId = SiteSettings::get('adsense_client_id', '');
+        $this->adsenseTopSlot = SiteSettings::get('adsense_top_slot', '');
+        $this->adsenseSidebarSlot = SiteSettings::get('adsense_sidebar_slot', '');
+        $this->adsenseArticleSlot = SiteSettings::get('adsense_article_slot', '');
     }
 
     public function addLocale()
@@ -89,33 +82,26 @@ class Settings extends Component
     {
         $this->validate();
 
-        $tenant = app(TenantManager::class)->getTenant();
-
-        // 1. Prepare settings array
-        $settings = $tenant->settings ?? [];
-        $settings['meta_description'] = $this->metaDescription;
-        $settings['adsense_client_id'] = $this->adsenseClientId;
-        $settings['adsense_top_slot'] = $this->adsenseTopSlot;
-        $settings['adsense_sidebar_slot'] = $this->adsenseSidebarSlot;
-        $settings['adsense_article_slot'] = $this->adsenseArticleSlot;
+        // 1. Save standard settings
+        SiteSettings::set('site_name', $this->siteName);
+        SiteSettings::set('default_locale', $this->defaultLocale);
+        SiteSettings::set('supported_locales', array_values($this->supportedLocales));
+        SiteSettings::set('meta_description', $this->metaDescription);
+        
+        SiteSettings::set('adsense_client_id', $this->adsenseClientId);
+        SiteSettings::set('adsense_top_slot', $this->adsenseTopSlot);
+        SiteSettings::set('adsense_sidebar_slot', $this->adsenseSidebarSlot);
+        SiteSettings::set('adsense_article_slot', $this->adsenseArticleSlot);
 
         // 2. Handle Logo Upload
         if ($this->logo) {
             $logoPath = $this->logo->store('branding', 'public');
-            $settings['logo'] = asset('storage/' . $logoPath);
-            $this->existingLogo = $settings['logo'];
+            $logoUrl = asset('storage/' . $logoPath);
+            SiteSettings::set('logo', $logoUrl);
+            $this->existingLogo = $logoUrl;
         }
 
-        // 3. Update Tenant
-        $tenant->update([
-            'name' => $this->siteName,
-            'default_locale' => $this->defaultLocale,
-            'supported_locales' => array_values($this->supportedLocales),
-            'settings' => $settings,
-        ]);
-
-        // Clear tenancy domain caches
-        $tenant->domains->each(fn($d) => app(TenantManager::class)->clearCache($d->domain));
+        ActivityLogger::log('settings_updated', 'Updated site configuration preferences');
         
         session()->flash('message', 'Settings updated successfully.');
     }

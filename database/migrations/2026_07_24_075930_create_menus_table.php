@@ -13,11 +13,8 @@ return new class extends Migration
     {
         Schema::create('menus', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
-            $table->string('name'); // header, footer, sidebar
+            $table->string('name')->unique(); // header, footer, sidebar
             $table->timestamps();
-
-            $table->unique(['tenant_id', 'name']);
         });
     }
 

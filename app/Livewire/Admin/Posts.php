@@ -4,7 +4,11 @@ namespace App\Livewire\Admin;
 
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\Tag;
+use App\Models\PostRevision;
 use App\Services\TenantManager;
+use App\Services\ActivityLogger;
+use App\Services\ImageOptimizer;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -31,7 +35,19 @@ class Posts extends Component
     public ?int $editingPostId = null;
     public bool $isCreating = false;
 
+    // Tags list selection
+    public array $selectedTags = [];
+
+    // Revisions list
+    public $revisions = [];
+
+    // View Filter ('active' vs 'trash')
+    public string $viewFilter = 'active';
+
     public array $supportedLocales = [];
+
+    // Auto-save state message
+    public string $lastSavedAt = '';
 
     protected function rules(): array
     {
@@ -46,13 +62,13 @@ class Posts extends Component
             'adsense_enabled' => 'boolean',
             'published_at' => 'nullable|date',
             'featured_image' => 'nullable|image|max:2048', // 2MB max
+            'selectedTags' => 'array',
         ];
     }
 
     public function mount()
     {
-        $tenant = app(TenantManager::class)->getTenant();
-        $this->supportedLocales = $tenant->supported_locales ?? [$tenant->default_locale];
+        $this->supportedLocales = \App\Services\SiteSettings::get('supported_locales', ['en']);
         $this->resetInputFields();
     }
 
@@ -78,6 +94,9 @@ class Posts extends Component
         $this->featured_image = null;
         $this->existing_featured_image = null;
         $this->editingPostId = null;
+        $this->selectedTags = [];
+        $this->revisions = [];
+        $this->lastSavedAt = '';
     }
 
     public function toggleCreate()
@@ -88,11 +107,34 @@ class Posts extends Component
 
     public function updatedTitles($value, $key)
     {
-        $tenant = app(TenantManager::class)->getTenant();
-        $primaryLocale = $tenant->default_locale;
+        $primaryLocale = \App\Services\SiteSettings::get('default_locale', 'en');
         if ($key === $primaryLocale) {
             $this->slug = Str::slug($value);
         }
+    }
+
+    public function autoSave()
+    {
+        if (!$this->editingPostId || empty($this->titles)) {
+            return;
+        }
+
+        // Auto-save creates a revision entry
+        PostRevision::create([
+            'post_id' => $this->editingPostId,
+            'user_id' => auth()->id(),
+            'title' => $this->titles,
+            'content' => $this->contents,
+            'created_at' => now(),
+        ]);
+
+        // Refresh revisions list
+        $this->revisions = PostRevision::where('post_id', $this->editingPostId)
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+
+        $this->lastSavedAt = now()->format('H:i:s');
     }
 
     public function editPost(int $id)
@@ -119,6 +161,27 @@ class Posts extends Component
             $this->meta_titles[$locale] = $post->meta_title[$locale] ?? '';
             $this->meta_descriptions[$locale] = $post->meta_description[$locale] ?? '';
         }
+
+        // Load Tags
+        $this->selectedTags = $post->tags->pluck('id')->toArray();
+
+        // Load Revisions
+        $this->revisions = PostRevision::where('post_id', $id)
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+    }
+
+    public function restoreRevision(int $revisionId)
+    {
+        $revision = PostRevision::findOrFail($revisionId);
+        
+        foreach ($this->supportedLocales as $locale) {
+            $this->titles[$locale] = $revision->title[$locale] ?? '';
+            $this->contents[$locale] = $revision->content[$locale] ?? '';
+        }
+
+        session()->flash('message', 'Revision content restored to editor. Click Save to commit changes.');
     }
 
     public function savePost()
@@ -137,9 +200,10 @@ class Posts extends Component
             'published_at' => $this->published_at ?: null,
         ];
 
-        // Handle image upload
+        // Handle image upload and optimization to WebP
         if ($this->featured_image) {
-            $imagePath = $this->featured_image->store('posts', 'public');
+            $optimizer = new ImageOptimizer();
+            $imagePath = $optimizer->convertToWebp($this->featured_image, 'posts');
             $postData['featured_image'] = $imagePath;
         }
 
@@ -147,13 +211,28 @@ class Posts extends Component
             $post = Post::findOrFail($this->editingPostId);
             $post->update($postData);
             
-            // Clear caches
+            // Sync Tags
+            $post->tags()->sync($this->selectedTags);
+
+            // Record Manual Revision
+            PostRevision::create([
+                'post_id' => $post->id,
+                'user_id' => auth()->id(),
+                'title' => $this->titles,
+                'content' => $this->contents,
+                'created_at' => now(),
+            ]);
+
+            ActivityLogger::log('post_updated', "Updated blog post: {$post->slug}");
             app(\App\Services\PostService::class)->clearCache($post->slug);
             session()->flash('message', 'Blog post updated successfully.');
         } else {
             $post = Post::create($postData);
             
-            // Clear caches
+            // Sync Tags
+            $post->tags()->sync($this->selectedTags);
+
+            ActivityLogger::log('post_created', "Created blog post: {$post->slug}");
             app(\App\Services\PostService::class)->clearCache();
             session()->flash('message', 'Blog post published successfully.');
         }
@@ -168,18 +247,43 @@ class Posts extends Component
         $slug = $post->slug;
         $post->delete();
 
-        // Clear caches
+        ActivityLogger::log('post_trashed', "Moved post to trash: {$slug}");
         app(\App\Services\PostService::class)->clearCache($slug);
-        session()->flash('message', 'Blog post deleted successfully.');
+        session()->flash('message', 'Post moved to trash successfully.');
+    }
+
+    public function restorePost(int $id)
+    {
+        $post = Post::onlyTrashed()->findOrFail($id);
+        $post->restore();
+
+        ActivityLogger::log('post_restored', "Restored post from trash: {$post->slug}");
+        app(\App\Services\PostService::class)->clearCache($post->slug);
+        session()->flash('message', 'Post restored successfully.');
+    }
+
+    public function forceDeletePost(int $id)
+    {
+        $post = Post::onlyTrashed()->findOrFail($id);
+        $slug = $post->slug;
+        $post->forceDelete();
+
+        ActivityLogger::log('post_force_deleted', "Permanently deleted post: {$slug}");
+        session()->flash('message', 'Post permanently deleted.');
     }
 
     public function render()
     {
-        // Category scope is active-tenant only under BelongsToTenant scope
         $categories = Category::all();
-        $posts = Post::with('category')->orderBy('id', 'desc')->paginate(10);
+        $tags = Tag::all();
 
-        return view('livewire.admin.posts', compact('posts', 'categories'))
+        if ($this->viewFilter === 'trash') {
+            $posts = Post::onlyTrashed()->with('category')->orderBy('id', 'desc')->paginate(10);
+        } else {
+            $posts = Post::with('category')->orderBy('id', 'desc')->paginate(10);
+        }
+
+        return view('livewire.admin.posts', compact('posts', 'categories', 'tags'))
             ->layout('components.layouts.admin');
     }
 }
