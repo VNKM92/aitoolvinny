@@ -229,10 +229,16 @@
         </div>
     @endif
 
+    <!-- Header Ad Placement -->
+    {!! \App\Services\AdRendererService::render('header') !!}
+
     <!-- Main Container -->
     <div class="relative z-10 flex-1 max-w-7xl mx-auto w-full px-6 py-8">
         {{ $slot }}
     </div>
+
+    <!-- Footer Ad Placement -->
+    {!! \App\Services\AdRendererService::render('footer') !!}
 
     <!-- Footer -->
     <footer class="border-t border-slate-900 bg-footer-bg mt-12">
@@ -267,5 +273,20 @@
             });
         }
     </script>
+    <!-- Dynamic Sticky Bottom and Mobile Anchor Ads -->
+    @php
+        $stickyAd = \App\Services\AdRendererService::render('sticky');
+        $anchorAd = \App\Services\AdRendererService::render('anchor');
+    @endphp
+    @if(!empty(trim(strip_tags($stickyAd, '<img><ins><iframe><a><script><div>'))))
+        <div class="fixed bottom-0 left-0 w-full z-40 bg-slate-950/95 border-t border-slate-900 flex justify-center py-2">
+            {!! $stickyAd !!}
+        </div>
+    @endif
+    @if(!empty(trim(strip_tags($anchorAd, '<img><ins><iframe><a><script><div>'))))
+        <div class="fixed bottom-12 left-1/2 transform -translate-x-1/2 z-40 md:hidden bg-slate-950/95 border border-slate-900 rounded-xl px-4 py-2 shadow-2xl">
+            {!! $anchorAd !!}
+        </div>
+    @endif
 </body>
 </html>

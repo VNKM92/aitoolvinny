@@ -17,6 +17,8 @@ use App\Livewire\Admin\ActivityLogs;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TenantController;
 use App\Livewire\Admin\AIGenerator;
+use App\Livewire\Admin\Monetization;
+use App\Http\Controllers\MonetizationController;
 use Illuminate\Support\Facades\Auth;
 
 // 1. Guest Authentication Routes
@@ -39,6 +41,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/logs', ActivityLogs::class)->name('admin.logs');
     Route::get('/admin/settings', Settings::class)->name('admin.settings');
     Route::get('/admin/ai', AIGenerator::class)->name('admin.ai');
+    Route::get('/admin/monetization', Monetization::class)->name('admin.monetization');
 
     Route::get('/logout', function () {
         Auth::logout();
@@ -64,6 +67,9 @@ Route::get('/sw.js', function () {
         'Content-Type' => 'application/javascript'
     ]);
 });
+
+Route::get('/ad-click/{id}', [MonetizationController::class, 'adClick'])->name('tenant.ad.click');
+Route::get('/go/{slug}', [MonetizationController::class, 'affiliateRedirect'])->name('tenant.affiliate.redirect');
 
 // 4. Prefixed Localized Public Front Routing (e.g. site.com/es/...)
 Route::prefix('{locale}')->middleware([\App\Http\Middleware\SetLocale::class])->group(function () {

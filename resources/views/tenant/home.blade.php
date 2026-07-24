@@ -5,7 +5,7 @@
             <h2 class="text-2xl font-bold tracking-tight text-white mb-6">Latest Articles</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                @forelse($posts as $post)
+                @forelse($posts as $index => $post)
                     <article class="backdrop-blur-md bg-slate-900/40 border border-slate-900 rounded-2xl overflow-hidden hover:border-slate-800 transition-all flex flex-col justify-between group">
                         <div>
                             @if($post->featured_image)
@@ -36,6 +36,18 @@
                             <a href="{{ route('tenant.post', ['slug' => $post->slug, 'locale' => $locale]) }}" class="font-bold text-indigo-400 hover:text-indigo-300">Read More &rarr;</a>
                         </div>
                     </article>
+
+                    <!-- In-Feed Ad slot every 2 posts -->
+                    @if(($index + 1) % 2 === 0)
+                        @php
+                            $inFeedAd = \App\Services\AdRendererService::render('in_feed');
+                        @endphp
+                        @if(!empty(trim(strip_tags($inFeedAd, '<img><ins><iframe><a><script><div>'))))
+                            <div class="md:col-span-2 backdrop-blur-md bg-slate-900/20 border border-slate-900/40 p-4 rounded-2xl flex justify-center items-center">
+                                {!! $inFeedAd !!}
+                            </div>
+                        @endif
+                    @endif
                 @empty
                     <div class="col-span-2 py-12 text-center text-slate-500">
                         No articles published yet. Stay tuned!
