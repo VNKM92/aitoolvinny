@@ -27,8 +27,7 @@ class Categories extends Component
 
     public function mount()
     {
-        $tenant = app(TenantManager::class)->getTenant();
-        $this->supportedLocales = $tenant->supported_locales ?? [$tenant->default_locale];
+        $this->supportedLocales = \App\Services\SiteSettings::get('supported_locales', ['en']);
         $this->resetInputFields();
     }
 
@@ -44,9 +43,8 @@ class Categories extends Component
 
     public function updatedNames($value, $key)
     {
-        // Auto-generate slug from primary locale (usually first in array or default)
-        $tenant = app(TenantManager::class)->getTenant();
-        $primaryLocale = $tenant->default_locale;
+        // Auto-generate slug from primary locale
+        $primaryLocale = \App\Services\SiteSettings::get('default_locale', 'en');
         if ($key === $primaryLocale) {
             $this->slug = Str::slug($value);
         }

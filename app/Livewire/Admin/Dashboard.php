@@ -5,34 +5,25 @@ namespace App\Livewire\Admin;
 use App\Models\Category;
 use App\Models\Page;
 use App\Models\Post;
-use App\Models\Tenant;
-use App\Models\User;
-use App\Services\TenantManager;
+use App\Models\Comment;
+use App\Models\Subscriber;
 use Livewire\Component;
 
 class Dashboard extends Component
 {
-    public int $totalTenants = 0;
-    public int $totalUsers = 0;
-
     public int $totalPosts = 0;
     public int $totalCategories = 0;
     public int $totalPages = 0;
+    public int $totalComments = 0;
+    public int $totalSubscribers = 0;
 
     public function mount()
     {
-        $user = auth()->user();
-
-        if ($user->isSuperAdmin()) {
-            $this->totalTenants = Tenant::count();
-            // Count users excluding super admin
-            $this->totalUsers = User::where('role', '!=', 'super_admin')->count();
-        } else {
-            // Under BelongsToTenant, these are automatically scoped to the active tenant!
-            $this->totalPosts = Post::count();
-            $this->totalCategories = Category::count();
-            $this->totalPages = Page::count();
-        }
+        $this->totalPosts = Post::count();
+        $this->totalCategories = Category::count();
+        $this->totalPages = Page::count();
+        $this->totalComments = Comment::count();
+        $this->totalSubscribers = Subscriber::count();
     }
 
     public function render()

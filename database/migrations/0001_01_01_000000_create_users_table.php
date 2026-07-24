@@ -13,12 +13,11 @@ return new class extends Migration
     {
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('tenant_id')->nullable()->index();
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('role')->default('tenant_admin'); // super_admin, tenant_admin
+            $table->string('role')->default('editor'); // administrator, editor, author
             $table->rememberToken();
             $table->timestamps();
         });

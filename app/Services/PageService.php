@@ -36,8 +36,7 @@ class PageService
      */
     public function getAllPages(): Collection
     {
-        $tenantId = app(TenantManager::class)->getTenantId() ?: 0;
-        return Cache::remember("tenant_{$tenantId}_pages_all", now()->addHours(12), function () {
+        return Cache::remember("site_pages_all", now()->addHours(12), function () {
             return $this->pageRepo->all();
         });
     }
@@ -47,8 +46,7 @@ class PageService
      */
     public function getPublishedPages(): Collection
     {
-        $tenantId = app(TenantManager::class)->getTenantId() ?: 0;
-        return Cache::remember("tenant_{$tenantId}_pages_published", now()->addHours(12), function () {
+        return Cache::remember("site_pages_published", now()->addHours(12), function () {
             return $this->pageRepo->getPublished();
         });
     }
@@ -58,8 +56,7 @@ class PageService
      */
     public function getPageBySlug(string $slug): ?Page
     {
-        $tenantId = app(TenantManager::class)->getTenantId() ?: 0;
-        return Cache::remember("tenant_{$tenantId}_page_{$slug}", now()->addDays(1), function () use ($slug) {
+        return Cache::remember("site_page_{$slug}", now()->addDays(1), function () use ($slug) {
             return $this->pageRepo->findBySlug($slug);
         });
     }
@@ -101,13 +98,11 @@ class PageService
      */
     public function clearCache(?string $slug = null): void
     {
-        $tenantId = app(TenantManager::class)->getTenantId() ?: 0;
-
-        Cache::forget("tenant_{$tenantId}_pages_all");
-        Cache::forget("tenant_{$tenantId}_pages_published");
+        Cache::forget("site_pages_all");
+        Cache::forget("site_pages_published");
 
         if ($slug) {
-            Cache::forget("tenant_{$tenantId}_page_{$slug}");
+            Cache::forget("site_page_{$slug}");
         }
     }
 }

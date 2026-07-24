@@ -13,10 +13,9 @@ return new class extends Migration
     {
         Schema::create('posts', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             $table->foreignId('category_id')->nullable()->constrained('categories')->nullOnDelete();
             $table->json('title');
-            $table->string('slug');
+            $table->string('slug')->unique();
             $table->json('content');
             $table->string('featured_image')->nullable();
             $table->string('status')->default('draft'); // draft, published
@@ -25,8 +24,6 @@ return new class extends Migration
             $table->boolean('adsense_enabled')->default(true);
             $table->timestamp('published_at')->nullable();
             $table->timestamps();
-
-            $table->unique(['tenant_id', 'slug']);
         });
     }
 

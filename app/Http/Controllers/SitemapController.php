@@ -4,34 +4,26 @@ namespace App\Http\Controllers;
 
 use App\Services\PageService;
 use App\Services\PostService;
-use App\Services\TenantManager;
+use App\Services\SiteSettings;
 use Illuminate\Http\Response;
 
 class SitemapController extends Controller
 {
-    protected TenantManager $tenantManager;
     protected PostService $postService;
     protected PageService $pageService;
 
-    public function __construct(TenantManager $tenantManager, PostService $postService, PageService $pageService)
+    public function __construct(PostService $postService, PageService $pageService)
     {
-        $this->tenantManager = $tenantManager;
         $this->postService = $postService;
         $this->pageService = $pageService;
     }
 
     /**
-     * Generate sitemap.xml for current tenant.
+     * Generate sitemap.xml.
      */
     public function index(): Response
     {
-        $tenant = $this->tenantManager->getTenant();
-
-        if (!$tenant) {
-            abort(404);
-        }
-
-        $locales = $tenant->supported_locales ?? [$tenant->default_locale];
+        $locales = SiteSettings::get('supported_locales', ['en']);
         $posts = $this->postService->getAllPosts()->filter(fn($p) => $p->status === 'published');
         $pages = $this->pageService->getPublishedPages();
 

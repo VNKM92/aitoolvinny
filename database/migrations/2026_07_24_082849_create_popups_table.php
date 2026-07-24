@@ -11,14 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('tenants', function (Blueprint $table) {
+        Schema::create('popups', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('subdomain')->unique();
+            $table->json('title');
+            $table->json('content');
             $table->boolean('is_active')->default(true);
-            $table->string('default_locale')->default('en');
-            $table->json('supported_locales')->nullable();
-            $table->json('settings')->nullable();
+            $table->timestamp('starts_at')->nullable();
+            $table->timestamp('ends_at')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('tenants');
+        Schema::dropIfExists('popups');
     }
 };

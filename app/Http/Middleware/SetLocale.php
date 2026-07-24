@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Services\TenantManager;
+use App\Services\SiteSettings;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -14,21 +14,17 @@ class SetLocale
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $tenantManager = app(TenantManager::class);
+        $defaultLocale = SiteSettings::get('default_locale', 'en');
+        $supportedLocales = SiteSettings::get('supported_locales', ['en']);
 
-        if ($tenantManager->hasTenant()) {
-            $tenant = $tenantManager->getTenant();
-            $supportedLocales = $tenant->supported_locales ?? [$tenant->default_locale];
+        // 1. Check if locale parameter is in the URL path (e.g. /es/posts)
+        $locale = $request->segment(1);
 
-            // 1. Check if locale parameter is in the URL path (e.g. /es/posts)
-            $locale = $request->segment(1);
-
-            if (in_array($locale, $supportedLocales)) {
-                app()->setLocale($locale);
-            } else {
-                // 2. Otherwise fallback to tenant default locale
-                app()->setLocale($tenant->default_locale);
-            }
+        if (in_array($locale, $supportedLocales)) {
+            app()->setLocale($locale);
+        } else {
+            // 2. Otherwise fallback to default locale
+            app()->setLocale($defaultLocale);
         }
 
         return $next($request);

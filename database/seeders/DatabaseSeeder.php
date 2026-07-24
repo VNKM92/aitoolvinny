@@ -2,9 +2,8 @@
 
 namespace Database\Seeders;
 
-use App\Models\Tenant;
-use App\Models\TenantDomain;
 use App\Models\User;
+use App\Services\SiteSettings;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -15,42 +14,23 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Create Super Admin User
-        User::withoutGlobalScopes()->create([
-            'name' => 'SaaS Super Admin',
-            'email' => 'admin@saas.com',
+        // 1. Create Unified Administrator User
+        User::create([
+            'name' => 'CMS Administrator',
+            'email' => 'admin@cms.com',
             'password' => Hash::make('password'),
-            'role' => 'super_admin',
-            'tenant_id' => null,
+            'role' => 'administrator',
         ]);
 
-        // 2. Create default Tenant website
-        $tenant = Tenant::create([
-            'name' => 'Sample Dev Blog',
-            'subdomain' => 'devblog',
-            'default_locale' => 'en',
-            'supported_locales' => ['en', 'es'],
-            'settings' => [
-                'meta_description' => 'The ultimate news platform for developers.',
-                'logo' => '',
-                'adsense_client_id' => '',
-            ],
-        ]);
-
-        // 3. Create Tenant Domain Mapping
-        TenantDomain::create([
-            'tenant_id' => $tenant->id,
-            'domain' => 'devblog.localhost',
-            'is_primary' => true,
-        ]);
-
-        // 4. Create Tenant Admin User
-        User::withoutGlobalScopes()->create([
-            'name' => 'Dev Blog Editor',
-            'email' => 'editor@devblog.com',
-            'password' => Hash::make('password'),
-            'role' => 'tenant_admin',
-            'tenant_id' => $tenant->id,
-        ]);
+        // 2. Seed Default Site-Wide Settings
+        SiteSettings::set('site_name', 'Sample Dev Blog');
+        SiteSettings::set('default_locale', 'en');
+        SiteSettings::set('supported_locales', ['en', 'es']);
+        SiteSettings::set('meta_description', 'The ultimate news platform for developers.');
+        SiteSettings::set('logo', '');
+        SiteSettings::set('adsense_client_id', '');
+        SiteSettings::set('adsense_top_slot', '');
+        SiteSettings::set('adsense_sidebar_slot', '');
+        SiteSettings::set('adsense_article_slot', '');
     }
 }

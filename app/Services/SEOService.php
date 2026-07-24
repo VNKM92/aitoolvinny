@@ -4,17 +4,20 @@ namespace App\Services;
 
 use App\Models\Post;
 use App\Models\Page;
-use App\Models\Tenant;
 
 class SEOService
 {
     /**
      * Generate HTML Meta tags for a Page/Post.
      */
-    public function generateTags($model, Tenant $tenant, string $locale = 'en'): array
+    public function generateTags($model, string $locale = 'en'): array
     {
         $postService = app(PostService::class);
         $pageService = app(PageService::class);
+
+        $siteName = SiteSettings::get('site_name', 'CMS Website');
+        $siteLogo = SiteSettings::get('logo', '');
+        $siteMetaDesc = SiteSettings::get('meta_description', 'Welcome to ' . $siteName);
 
         $title = '';
         $description = '';
@@ -33,13 +36,13 @@ class SEOService
             $description = $pageService->translate($model, 'meta_description', $locale) ?: substr(strip_tags($pageService->translate($model, 'content', $locale)), 0, 160);
             $url = route('tenant.page', ['slug' => $model->slug, 'locale' => $locale]);
         } else {
-            // General Tenant Site Metadata
-            $title = $tenant->name;
-            $description = $tenant->settings['meta_description'] ?? 'Welcome to ' . $tenant->name;
+            // General Site Metadata
+            $title = $siteName;
+            $description = $siteMetaDesc;
         }
 
         // Apply site brand name suffix
-        $title = $title . ' | ' . $tenant->name;
+        $title = $title . ' | ' . $siteName;
 
         return [
             'title' => $title,
@@ -50,14 +53,14 @@ class SEOService
                 'description' => $description,
                 'url' => $url,
                 'type' => $type,
-                'image' => $image ?: ($tenant->settings['logo'] ?? ''),
-                'site_name' => $tenant->name,
+                'image' => $image ?: $siteLogo,
+                'site_name' => $siteName,
             ],
             'twitter' => [
                 'card' => 'summary_large_image',
                 'title' => $title,
                 'description' => $description,
-                'image' => $image ?: ($tenant->settings['logo'] ?? ''),
+                'image' => $image ?: $siteLogo,
             ],
         ];
     }
@@ -65,10 +68,13 @@ class SEOService
     /**
      * Generate JSON-LD Schema markup.
      */
-    public function generateJsonLd($model, Tenant $tenant, string $locale = 'en'): string
+    public function generateJsonLd($model, string $locale = 'en'): string
     {
         $postService = app(PostService::class);
         $pageService = app(PageService::class);
+
+        $siteName = SiteSettings::get('site_name', 'CMS Website');
+        $siteLogo = SiteSettings::get('logo', '');
 
         $schema = [];
 
@@ -88,14 +94,14 @@ class SEOService
                 'dateModified' => $model->updated_at->toIso8601String(),
                 'author' => [
                     '@type' => 'Organization',
-                    'name' => $tenant->name,
+                    'name' => $siteName,
                 ],
                 'publisher' => [
                     '@type' => 'Organization',
-                    'name' => $tenant->name,
+                    'name' => $siteName,
                     'logo' => [
                         '@type' => 'ImageObject',
-                        'url' => $tenant->settings['logo'] ?? asset('logo.png'),
+                        'url' => $siteLogo ?: asset('logo.png'),
                     ]
                 ],
             ];
@@ -108,7 +114,7 @@ class SEOService
             $schema = [
                 '@context' => 'https://schema.org',
                 '@type' => 'WebSite',
-                'name' => $tenant->name,
+                'name' => $siteName,
                 'url' => request()->root(),
                 'potentialAction' => [
                     '@type' => 'SearchAction',
