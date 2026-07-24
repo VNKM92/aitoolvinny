@@ -17,7 +17,7 @@
                 @elseif(preg_match('/\[form=(\d+)\]/', $segment, $matches))
                     <livewire:public.custom-form :formId="(int)$matches[1]" />
                 @else
-                    {!! $segment !!}
+                    {!! \App\Services\SEOHTMLOptimizer::optimize(\App\Services\SEOInternalLinker::link($segment)) !!}
                 @endif
             @endforeach
         </div>

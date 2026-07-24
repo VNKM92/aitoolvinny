@@ -27,7 +27,7 @@
 
         <!-- Article Content -->
         <div class="prose prose-invert prose-indigo max-w-none text-slate-300 text-sm leading-relaxed space-y-4 pt-4">
-            {!! $post->content[$locale] ?? reset($post->content) !!}
+            {!! \App\Services\SEOHTMLOptimizer::optimize(\App\Services\SEOInternalLinker::link($post->content[$locale] ?? reset($post->content))) !!}
         </div>
 
         <!-- Tags List block -->

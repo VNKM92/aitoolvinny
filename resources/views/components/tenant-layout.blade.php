@@ -17,6 +17,34 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Search Console & Webmaster Verifications -->
+    @php
+        $gscCode = \App\Services\SiteSettings::get('google_site_verification', '');
+        $bingCode = \App\Services\SiteSettings::get('msvalidate_01', '');
+        $yandexCode = \App\Services\SiteSettings::get('yandex_verification', '');
+        $ga4Id = \App\Services\SiteSettings::get('ga_tracking_id', '');
+    @endphp
+    @if(!empty($gscCode))
+    <meta name="google-site-verification" content="{{ $gscCode }}">
+    @endif
+    @if(!empty($bingCode))
+    <meta name="msvalidate.01" content="{{ $bingCode }}">
+    @endif
+    @if(!empty($yandexCode))
+    <meta name="yandex-verification" content="{{ $yandexCode }}">
+    @endif
+
+    <!-- Google Analytics 4 (GA4) -->
+    @if(!empty($ga4Id))
+    <script async src="https://www.googletagmanager.com/gtag/js?id={{ $ga4Id }}"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '{{ $ga4Id }}');
+    </script>
+    @endif
+
     <title>{{ $seo['title'] ?? $siteName }}</title>
     
     <!-- Dynamic SEO Meta Tags -->

@@ -46,8 +46,12 @@ Route::middleware(['auth'])->group(function () {
     })->name('admin.logout');
 });
 
-// 3. Dynamic XML Sitemap
+// 3. Dynamic XML Sitemap, Robots, and Feed Endpoints
 Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('tenant.sitemap');
+Route::get('/sitemap-images.xml', [SitemapController::class, 'images'])->name('tenant.sitemap.images');
+Route::get('/sitemap-news.xml', [SitemapController::class, 'news'])->name('tenant.sitemap.news');
+Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('tenant.robots');
+Route::get('/feed', [SitemapController::class, 'feed'])->name('tenant.feed');
 
 // 4. Prefixed Localized Public Front Routing (e.g. site.com/es/...)
 Route::prefix('{locale}')->middleware([\App\Http\Middleware\SetLocale::class])->group(function () {
@@ -63,4 +67,9 @@ Route::middleware([\App\Http\Middleware\SetLocale::class])->group(function () {
     Route::get('/posts/{slug}', [TenantController::class, 'post'])->name('tenant.post');
     Route::get('/pages/{slug}', [TenantController::class, 'page'])->name('tenant.page');
     Route::get('/categories/{slug}', [TenantController::class, 'category'])->name('tenant.category');
+});
+
+// 6. Fallback route to log 404s in middleware
+Route::fallback(function () {
+    abort(404);
 });
