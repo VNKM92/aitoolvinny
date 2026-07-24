@@ -16,6 +16,7 @@ use App\Livewire\Admin\Popups;
 use App\Livewire\Admin\ActivityLogs;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TenantController;
+use App\Livewire\Admin\AIGenerator;
 use Illuminate\Support\Facades\Auth;
 
 // 1. Guest Authentication Routes
@@ -37,6 +38,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/popups', Popups::class)->name('admin.popups');
     Route::get('/admin/logs', ActivityLogs::class)->name('admin.logs');
     Route::get('/admin/settings', Settings::class)->name('admin.settings');
+    Route::get('/admin/ai', AIGenerator::class)->name('admin.ai');
 
     Route::get('/logout', function () {
         Auth::logout();
