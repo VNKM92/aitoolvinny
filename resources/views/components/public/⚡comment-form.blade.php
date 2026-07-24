@@ -14,11 +14,18 @@ new class extends Component
     public string $content = '';
     public ?int $parentId = null;
 
+    // Spam Protection
+    public string $website = ''; // Honeypot
+    public int $num1;
+    public int $num2;
+    public string $captchaAnswer = '';
+
     protected array $rules = [
         'authorName' => 'required_without:userId|nullable|string|max:100',
         'authorEmail' => 'required_without:userId|nullable|email|max:150',
         'content' => 'required|string|max:1000',
         'parentId' => 'nullable|exists:comments,id',
+        'captchaAnswer' => 'required|integer',
     ];
 
     public function mount(int $postId)
@@ -28,6 +35,14 @@ new class extends Component
             $this->authorName = auth()->user()->name;
             $this->authorEmail = auth()->user()->email;
         }
+        $this->generateCaptcha();
+    }
+
+    private function generateCaptcha()
+    {
+        $this->num1 = rand(1, 9);
+        $this->num2 = rand(1, 9);
+        $this->captchaAnswer = '';
     }
 
     public function setReply(int $id)
@@ -42,6 +57,19 @@ new class extends Component
 
     public function submitComment()
     {
+        // 1. Honeypot check (Spam Protection)
+        if (!empty($this->website)) {
+            // Silently ignore spam submission
+            $this->content = '';
+            return;
+        }
+
+        // 2. Math Captcha check
+        if ((int)$this->captchaAnswer !== ($this->num1 + $this->num2)) {
+            $this->addError('captchaAnswer', 'Incorrect captcha answer. Please try again.');
+            return;
+        }
+
         $this->validate();
 
         Comment::create([
@@ -56,6 +84,7 @@ new class extends Component
 
         $this->content = '';
         $this->parentId = null;
+        $this->generateCaptcha();
         session()->flash('comment_message', 'Your comment has been submitted and is awaiting moderation.');
     }
 };
@@ -134,6 +163,12 @@ new class extends Component
                 </div>
             @endif
 
+            <!-- Honeypot Spam Protection Field (invisible to humans) -->
+            <div style="display: none;">
+                <label>Do not fill this field if you are human</label>
+                <input wire:model="website" type="text">
+            </div>
+
             @guest
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
@@ -160,6 +195,15 @@ new class extends Component
                     class="mt-1 block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
                     placeholder="Share your opinions on this post..." required></textarea>
                 @error('content') <span class="text-[10px] text-rose-500 block mt-1">{{ $message }}</span> @enderror
+            </div>
+
+            <!-- Math Captcha Spam Protection Field -->
+            <div class="max-w-xs">
+                <label class="block text-[10px] font-semibold uppercase tracking-wider text-slate-450">Spam Verification: {{ $num1 }} + {{ $num2 }} = ?</label>
+                <input wire:model="captchaAnswer" type="text" required
+                    class="mt-1 block w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+                    placeholder="Enter the sum">
+                @error('captchaAnswer') <span class="text-[10px] text-rose-500 block mt-1">{{ $message }}</span> @enderror
             </div>
 
             <button type="submit" 

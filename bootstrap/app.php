@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\SetLocale::class,
             \App\Http\Middleware\SEORedirectAnd404Middleware::class,
+            \App\Http\Middleware\OWASPSecurityHeadersMiddleware::class,
         ]);
 
         $middleware->trustProxies(at: '*');
