@@ -1,0 +1,175 @@
+:root {
+  --theme-body-bg: #020617;
+  --theme-body-text: #e2e8f0;
+  --theme-surface-bg: #0f172a;
+  --theme-card-bg: #111827;
+  --theme-section-bg: #111827;
+  --theme-header-bg: #0f172a;
+  --theme-header-text: #f8fafc;
+  --theme-footer-bg: #020617;
+  --theme-footer-text: #cbd5e1;
+  --theme-sidebar-bg: #111827;
+  --theme-sidebar-active: #4f46e5;
+  --theme-sidebar-hover: #1e293b;
+  --theme-primary: #4f46e5;
+  --theme-primary-hover: #4338ca;
+  --theme-secondary: #64748b;
+  --theme-accent: #ec4899;
+  --theme-success: #22c55e;
+  --theme-warning: #f59e0b;
+  --theme-danger: #ef4444;
+  --theme-info: #38bdf8;
+  --theme-nav-color: #cbd5e1;
+  --theme-nav-hover: #ffffff;
+  --theme-border-color: #334155;
+  --theme-shadow-color: rgba(15, 23, 42, 0.45);
+  --theme-overlay-color: rgba(15, 23, 42, 0.65);
+  --theme-selection-color: rgba(79, 70, 229, 0.25);
+  --theme-scrollbar-color: #334155;
+  --theme-scrollbar-thumb-color: #64748b;
+  --theme-font-heading: 'Outfit', sans-serif;
+  --theme-font-body: 'Inter', sans-serif;
+  --theme-font-button: 'Inter', sans-serif;
+  --theme-font-menu: 'Inter', sans-serif;
+  --theme-font-admin: 'Inter', sans-serif;
+  --theme-font-size-base: 16px;
+  --theme-line-height-base: 1.6;
+  --theme-letter-spacing: 0.01em;
+  --theme-font-weight-normal: 400;
+  --theme-font-weight-semibold: 600;
+  --theme-font-weight-bold: 700;
+  --theme-button-radius: 0.75rem;
+  --theme-button-padding: 0.95rem 1.4rem;
+  --theme-button-transition: 200ms ease;
+  --theme-card-radius: 1rem;
+  --theme-card-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+  --theme-card-hover-shadow: 0 24px 60px rgba(15, 23, 42, 0.2);
+  --theme-card-hover-scale: 1.01;
+  --theme-card-padding: 1.5rem;
+  --theme-form-input-bg: #0f172a;
+  --theme-form-input-border: #334155;
+  --theme-form-placeholder: #94a3b8;
+  --theme-form-focus-border: #4f46e5;
+  --theme-form-focus-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+  --theme-form-label: #cbd5e1;
+  --theme-form-error: #f87171;
+  --theme-form-success: #34d399;
+  --theme-form-radius: 0.75rem;
+  --theme-table-header-bg: #0f172a;
+  --theme-table-header-text: #e2e8f0;
+  --theme-table-row-bg: #111827;
+  --theme-table-row-alt: #0f172a;
+  --theme-table-row-hover: #1e293b;
+  --theme-table-border: #334155;
+  --theme-admin-sidebar-bg: #020617;
+  --theme-admin-sidebar-text: #cbd5e1;
+  --theme-admin-sidebar-active: #4f46e5;
+  --theme-admin-sidebar-hover: #1e293b;
+  --theme-admin-navbar-bg: #0f172a;
+  --theme-admin-cards-bg: #111827;
+  --theme-admin-buttons-bg: #4f46e5;
+  --theme-admin-forms-bg: #0f172a;
+  --theme-admin-tables-bg: #111827;
+  --theme-admin-widgets-bg: #111827;
+  --theme-dark-mode: auto;
+  --theme-dark-body-bg: #020617;
+  --theme-dark-surface-bg: #0f172a;
+  --theme-dark-card-bg: #111827;
+  --theme-dark-header-bg: #0f172a;
+  --theme-dark-footer-bg: #020617;
+  --theme-dark-buttons-bg: #4f46e5;
+  --theme-dark-forms-bg: #0f172a;
+  --theme-dark-sidebar-bg: #020617;
+  --theme-dark-text: #e2e8f0;
+}
+
+html { color-scheme: dark; }
+
+html.light { color-scheme: light; }
+html.dark { color-scheme: dark; }
+
+html, body {
+  min-height: 100%;
+  background: var(--theme-body-bg);
+  color: var(--theme-body-text);
+}
+
+body {
+  font-family: var(--theme-font-body);
+  line-height: var(--theme-line-height-base);
+  letter-spacing: var(--theme-letter-spacing);
+  transition: background-color 200ms ease, color 200ms ease;
+}
+
+a {
+  color: var(--theme-primary);
+}
+
+a:hover,
+a:focus {
+  color: var(--theme-primary-hover);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: var(--theme-header-text);
+}
+
+p, li, span, label {
+  color: var(--theme-body-text);
+}
+
+button,
+input,
+textarea,
+select {
+  color: var(--theme-body-text);
+}
+
+button {
+  background-color: var(--theme-primary);
+  border-color: var(--theme-border-color);
+}
+
+input,
+textarea,
+select {
+  background-color: var(--theme-surface-bg);
+  border-color: var(--theme-border-color);
+}
+
+.card,
+.panel,
+.modal,
+.dropdown {
+  background-color: var(--theme-card-bg);
+  border-color: var(--theme-border-color);
+}
+
+.bg-theme-body { background-color: var(--theme-body-bg) !important; }
+.bg-theme-surface { background-color: var(--theme-surface-bg) !important; }
+.bg-theme-card { background-color: var(--theme-card-bg) !important; }
+.bg-theme-primary { background-color: var(--theme-primary) !important; }
+.bg-theme-primary-hover:hover { background-color: var(--theme-primary-hover) !important; }
+.bg-theme-header { background-color: var(--theme-header-bg) !important; }
+.bg-theme-footer { background-color: var(--theme-footer-bg) !important; }
+.text-theme-body { color: var(--theme-body-text) !important; }
+.text-theme-header { color: var(--theme-header-text) !important; }
+.text-theme-footer { color: var(--theme-footer-text) !important; }
+.text-theme-primary { color: var(--theme-primary) !important; }
+.text-theme-primary-hover:hover { color: var(--theme-primary-hover) !important; }
+.border-theme { border-color: var(--theme-border-color) !important; }
+.text-theme-secondary { color: var(--theme-secondary) !important; }
+.bg-theme-secondary { background-color: var(--theme-secondary) !important; }
+/* Legacy helpers */
+.text-primary { color: var(--theme-primary) !important; }
+.bg-primary { background-color: var(--theme-primary) !important; }
+.hover\:bg-primary-hover:hover { background-color: var(--theme-primary-hover) !important; }
+.bg-header-bg { background-color: var(--theme-header-bg) !important; }
+.bg-footer-bg { background-color: var(--theme-footer-bg) !important; }
+.hover\:text-primary:hover { color: var(--theme-primary) !important; }
+.hover\:text-primary-hover:hover { color: var(--theme-primary-hover) !important; }
+.focus\:ring-primary:focus { --tw-ring-color: var(--theme-primary) !important; border-color: var(--theme-primary) !important; }
+.focus\:ring-2:focus { box-shadow: 0 0 0 2px var(--theme-primary) !important; }
+.shadow-indigo-600\/10 { --tw-shadow-color: var(--theme-primary) !important; }
+.bg-indigo-950\/20 { background-color: color-mix(in srgb, var(--theme-primary) 20%, transparent) !important; }
+.border-indigo-900\/30 { border-color: color-mix(in srgb, var(--theme-primary) 30%, transparent) !important; }

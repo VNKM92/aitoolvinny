@@ -14,13 +14,28 @@
     </style>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
+
+    @php
+        $adminThemeSettings = \App\Services\ThemeService::adminThemeSettings();
+    @endphp
+    <style>
+        :root {
+            {!! \App\Services\ThemeService::cssVariables($adminThemeSettings) !!}
+        }
+
+        /* Bulletproof class overrides to enforce runtime color switching in admin */
+        .text-backend-primary { color: var(--theme-backend-primary) !important; }
+        .bg-backend-primary { background-color: var(--theme-backend-primary) !important; }
+        .hover\:bg-backend-primary-hover:hover { background-color: var(--theme-backend-primary-hover) !important; }
+        .hover\:text-backend-primary:hover { color: var(--theme-backend-primary) !important; }
+    </style>
 </head>
 <body class="h-full flex overflow-hidden bg-slate-950 text-slate-100">
     <!-- Sidebar -->
     <div class="hidden md:flex md:flex-shrink-0">
         <div class="flex flex-col w-64 border-r border-slate-900 bg-slate-950">
             <div class="flex items-center h-16 px-6 border-b border-slate-900 bg-slate-950">
-                <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-pink-500">
+                <span class="text-xl font-bold text-backend-primary">
                     {{ \App\Services\SiteSettings::get('site_name', 'Control Center') }}
                 </span>
             </div>
@@ -108,7 +123,7 @@
             <div class="flex-shrink-0 flex border-t border-slate-900 p-4">
                 <div class="flex items-center justify-between w-full">
                     <div class="flex items-center min-w-0">
-                        <div class="h-9 w-9 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white uppercase text-sm">
+                        <div class="h-9 w-9 rounded-full bg-backend-primary flex items-center justify-center font-bold text-white uppercase text-sm animate-pulse">
                             {{ substr(auth()->user()->name, 0, 2) }}
                         </div>
                         <div class="ml-3 min-w-0">
@@ -139,7 +154,7 @@
                     </svg>
                 </button>
                 <div class="text-sm text-slate-400 font-medium">
-                    Role: <span class="text-indigo-400 capitalize font-semibold">{{ str_replace('_', ' ', auth()->user()->role) }}</span>
+                    Role: <span class="text-backend-primary capitalize font-semibold">{{ str_replace('_', ' ', auth()->user()->role) }}</span>
                 </div>
             </div>
             

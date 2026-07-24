@@ -1,0 +1,317 @@
+<?php
+
+namespace App\Services;
+
+use App\Services\SiteSettings;
+
+class ThemeService
+{
+    public static function presets(): array
+    {
+        return [
+            'default' => [
+                'name' => 'Default',
+                'values' => self::defaults(),
+            ],
+            'modern_blue' => [
+                'name' => 'Modern Blue',
+                'values' => array_merge(self::defaults(), [
+                    'theme_primary' => '#2563eb',
+                    'theme_primary_hover' => '#0ea5e9',
+                    'theme_secondary' => '#0ea5e9',
+                    'theme_accent' => '#8b5cf6',
+                    'theme_success' => '#16a34a',
+                    'theme_warning' => '#f59e0b',
+                    'theme_danger' => '#ef4444',
+                    'theme_info' => '#38bdf8',
+                    'theme_body_bg' => '#020617',
+                    'theme_body_text' => '#e2e8f0',
+                    'theme_surface_bg' => '#0f172a',
+                    'theme_section_bg' => '#111827',
+                    'theme_header_bg' => '#0f172a',
+                    'theme_header_text' => '#f8fafc',
+                    'theme_footer_bg' => '#020617',
+                    'theme_footer_text' => '#cbd5e1',
+                    'theme_sidebar_bg' => '#111827',
+                    'theme_sidebar_active' => '#2563eb',
+                    'theme_sidebar_hover' => '#1e293b',
+                    'theme_nav_color' => '#cbd5e1',
+                    'theme_nav_hover' => '#ffffff',
+                    'theme_border_color' => '#334155',
+                    'theme_shadow_color' => 'rgba(15, 23, 42, 0.45)',
+                    'theme_overlay_color' => 'rgba(15, 23, 42, 0.65)',
+                    'theme_selection_color' => 'rgba(37, 99, 235, 0.25)',
+                    'theme_scrollbar_color' => '#1e293b',
+                    'theme_scrollbar_thumb_color' => '#334155',
+                    'theme_font_heading' => "'Outfit', sans-serif",
+                    'theme_font_body' => "'Inter', sans-serif",
+                    'theme_font_button' => "'Inter', sans-serif",
+                    'theme_font_menu' => "'Inter', sans-serif",
+                    'theme_font_admin' => "'Inter', sans-serif",
+                    'theme_font_size_base' => '16px',
+                    'theme_line_height_base' => '1.6',
+                    'theme_letter_spacing' => '0.01em',
+                    'theme_font_weight_normal' => '400',
+                    'theme_font_weight_semibold' => '600',
+                    'theme_font_weight_bold' => '700',
+                    'theme_button_radius' => '0.75rem',
+                    'theme_button_padding' => '0.95rem 1.4rem',
+                    'theme_button_transition' => '200ms ease',
+                    'theme_card_radius' => '1rem',
+                    'theme_card_shadow' => '0 20px 50px rgba(15, 23, 42, 0.15)',
+                    'theme_card_hover_shadow' => '0 24px 60px rgba(15, 23, 42, 0.2)',
+                    'theme_card_hover_scale' => '1.01',
+                    'theme_card_padding' => '1.5rem',
+                    'theme_form_input_bg' => '#0f172a',
+                    'theme_form_input_border' => '#334155',
+                    'theme_form_placeholder' => '#94a3b8',
+                    'theme_form_focus_border' => '#2563eb',
+                    'theme_form_focus_shadow' => '0 0 0 3px rgba(37, 99, 235, 0.12)',
+                    'theme_form_label' => '#cbd5e1',
+                    'theme_form_error' => '#f87171',
+                    'theme_form_success' => '#34d399',
+                    'theme_form_radius' => '0.75rem',
+                    'theme_table_header_bg' => '#0f172a',
+                    'theme_table_header_text' => '#e2e8f0',
+                    'theme_table_row_bg' => '#111827',
+                    'theme_table_row_alt' => '#0f172a',
+                    'theme_table_row_hover' => '#1e293b',
+                    'theme_table_border' => '#334155',
+                    'theme_admin_sidebar_bg' => '#020617',
+                    'theme_admin_sidebar_text' => '#cbd5e1',
+                    'theme_admin_sidebar_active' => '#2563eb',
+                    'theme_admin_sidebar_hover' => '#1e293b',
+                    'theme_admin_navbar_bg' => '#0f172a',
+                    'theme_admin_cards_bg' => '#111827',
+                    'theme_admin_buttons_bg' => '#2563eb',
+                    'theme_admin_forms_bg' => '#0f172a',
+                    'theme_admin_tables_bg' => '#111827',
+                    'theme_admin_widgets_bg' => '#111827',
+                    'theme_dark_mode' => 'auto',
+                    'theme_dark_body_bg' => '#020617',
+                    'theme_dark_surface_bg' => '#0f172a',
+                    'theme_dark_card_bg' => '#111827',
+                    'theme_dark_header_bg' => '#0f172a',
+                    'theme_dark_footer_bg' => '#020617',
+                    'theme_dark_buttons_bg' => '#2563eb',
+                    'theme_dark_forms_bg' => '#0f172a',
+                    'theme_dark_sidebar_bg' => '#020617',
+                    'theme_dark_text' => '#e2e8f0',
+                ]),
+            ],
+            'minimal_white' => [
+                'name' => 'Minimal White',
+                'values' => array_merge(self::defaults(), [
+                    'theme_primary' => '#2563eb',
+                    'theme_primary_hover' => '#4f46e5',
+                    'theme_secondary' => '#64748b',
+                    'theme_accent' => '#14b8a6',
+                    'theme_success' => '#16a34a',
+                    'theme_warning' => '#f59e0b',
+                    'theme_danger' => '#dc2626',
+                    'theme_info' => '#0ea5e9',
+                    'theme_body_bg' => '#f8fafc',
+                    'theme_body_text' => '#0f172a',
+                    'theme_surface_bg' => '#ffffff',
+                    'theme_section_bg' => '#f1f5f9',
+                    'theme_header_bg' => '#ffffff',
+                    'theme_header_text' => '#0f172a',
+                    'theme_footer_bg' => '#ffffff',
+                    'theme_footer_text' => '#475569',
+                    'theme_sidebar_bg' => '#ffffff',
+                    'theme_sidebar_active' => '#2563eb',
+                    'theme_sidebar_hover' => '#e2e8f0',
+                    'theme_nav_color' => '#0f172a',
+                    'theme_nav_hover' => '#2563eb',
+                    'theme_border_color' => '#e2e8f0',
+                    'theme_shadow_color' => 'rgba(15, 23, 42, 0.08)',
+                    'theme_overlay_color' => 'rgba(15, 23, 42, 0.14)',
+                    'theme_selection_color' => 'rgba(37, 99, 235, 0.12)',
+                    'theme_scrollbar_color' => '#e2e8f0',
+                    'theme_scrollbar_thumb_color' => '#cbd5e1',
+                    'theme_font_heading' => "'Inter', sans-serif",
+                    'theme_font_body' => "'Roboto', sans-serif",
+                    'theme_font_button' => "'Inter', sans-serif",
+                    'theme_font_menu' => "'Inter', sans-serif",
+                    'theme_font_admin' => "'Inter', sans-serif",
+                    'theme_font_size_base' => '16px',
+                    'theme_line_height_base' => '1.65',
+                    'theme_letter_spacing' => '0.01em',
+                    'theme_font_weight_normal' => '400',
+                    'theme_font_weight_semibold' => '600',
+                    'theme_font_weight_bold' => '700',
+                    'theme_button_radius' => '0.75rem',
+                    'theme_button_padding' => '0.95rem 1.4rem',
+                    'theme_button_transition' => '180ms ease',
+                    'theme_card_radius' => '1rem',
+                    'theme_card_shadow' => '0 25px 60px rgba(15, 23, 42, 0.08)',
+                    'theme_card_hover_shadow' => '0 30px 70px rgba(15, 23, 42, 0.12)',
+                    'theme_card_hover_scale' => '1.01',
+                    'theme_card_padding' => '1.5rem',
+                    'theme_form_input_bg' => '#ffffff',
+                    'theme_form_input_border' => '#e2e8f0',
+                    'theme_form_placeholder' => '#94a3b8',
+                    'theme_form_focus_border' => '#2563eb',
+                    'theme_form_focus_shadow' => '0 0 0 3px rgba(37, 99, 235, 0.12)',
+                    'theme_form_label' => '#475569',
+                    'theme_form_error' => '#dc2626',
+                    'theme_form_success' => '#16a34a',
+                    'theme_form_radius' => '0.75rem',
+                    'theme_table_header_bg' => '#f8fafc',
+                    'theme_table_header_text' => '#0f172a',
+                    'theme_table_row_bg' => '#ffffff',
+                    'theme_table_row_alt' => '#f1f5f9',
+                    'theme_table_row_hover' => '#e2e8f0',
+                    'theme_table_border' => '#e2e8f0',
+                    'theme_admin_sidebar_bg' => '#ffffff',
+                    'theme_admin_sidebar_text' => '#0f172a',
+                    'theme_admin_sidebar_active' => '#2563eb',
+                    'theme_admin_sidebar_hover' => '#e2e8f0',
+                    'theme_admin_navbar_bg' => '#ffffff',
+                    'theme_admin_cards_bg' => '#ffffff',
+                    'theme_admin_buttons_bg' => '#2563eb',
+                    'theme_admin_forms_bg' => '#f8fafc',
+                    'theme_admin_tables_bg' => '#ffffff',
+                    'theme_admin_widgets_bg' => '#ffffff',
+                    'theme_dark_mode' => 'light',
+                    'theme_dark_body_bg' => '#0f172a',
+                    'theme_dark_surface_bg' => '#111827',
+                    'theme_dark_card_bg' => '#111827',
+                    'theme_dark_header_bg' => '#0f172a',
+                    'theme_dark_footer_bg' => '#020617',
+                    'theme_dark_buttons_bg' => '#2563eb',
+                    'theme_dark_forms_bg' => '#0f172a',
+                    'theme_dark_sidebar_bg' => '#020617',
+                    'theme_dark_text' => '#e2e8f0',
+                ]),
+            ],
+        ];
+    }
+
+    public static function defaults(): array
+    {
+        return [
+            'theme_primary' => '#4f46e5',
+            'theme_primary_hover' => '#4338ca',
+            'theme_secondary' => '#64748b',
+            'theme_accent' => '#ec4899',
+            'theme_success' => '#22c55e',
+            'theme_warning' => '#f59e0b',
+            'theme_danger' => '#ef4444',
+            'theme_info' => '#38bdf8',
+            'theme_body_bg' => '#020617',
+            'theme_body_text' => '#e2e8f0',
+            'theme_surface_bg' => '#0f172a',
+            'theme_card_bg' => '#111827',
+            'theme_section_bg' => '#111827',
+            'theme_header_bg' => '#0f172a',
+            'theme_header_text' => '#f8fafc',
+            'theme_footer_bg' => '#020617',
+            'theme_footer_text' => '#cbd5e1',
+            'theme_sidebar_bg' => '#111827',
+            'theme_sidebar_active' => '#4f46e5',
+            'theme_sidebar_hover' => '#1e293b',
+            'theme_nav_color' => '#cbd5e1',
+            'theme_nav_hover' => '#ffffff',
+            'theme_border_color' => '#334155',
+            'theme_shadow_color' => 'rgba(15, 23, 42, 0.45)',
+            'theme_overlay_color' => 'rgba(15, 23, 42, 0.65)',
+            'theme_selection_color' => 'rgba(79, 70, 229, 0.25)',
+            'theme_scrollbar_color' => '#334155',
+            'theme_scrollbar_thumb_color' => '#64748b',
+            'theme_font_heading' => "'Outfit', sans-serif",
+            'theme_font_body' => "'Inter', sans-serif",
+            'theme_font_button' => "'Inter', sans-serif",
+            'theme_font_menu' => "'Inter', sans-serif",
+            'theme_font_admin' => "'Inter', sans-serif",
+            'theme_font_size_base' => '16px',
+            'theme_line_height_base' => '1.6',
+            'theme_letter_spacing' => '0.01em',
+            'theme_font_weight_normal' => '400',
+            'theme_font_weight_semibold' => '600',
+            'theme_font_weight_bold' => '700',
+            'theme_button_radius' => '0.75rem',
+            'theme_button_padding' => '0.95rem 1.4rem',
+            'theme_button_transition' => '200ms ease',
+            'theme_card_radius' => '1rem',
+            'theme_card_shadow' => '0 20px 50px rgba(15, 23, 42, 0.15)',
+            'theme_card_hover_shadow' => '0 24px 60px rgba(15, 23, 42, 0.2)',
+            'theme_card_hover_scale' => '1.01',
+            'theme_card_padding' => '1.5rem',
+            'theme_form_input_bg' => '#0f172a',
+            'theme_form_input_border' => '#334155',
+            'theme_form_placeholder' => '#94a3b8',
+            'theme_form_focus_border' => '#4f46e5',
+            'theme_form_focus_shadow' => '0 0 0 3px rgba(79, 70, 229, 0.12)',
+            'theme_form_label' => '#cbd5e1',
+            'theme_form_error' => '#f87171',
+            'theme_form_success' => '#34d399',
+            'theme_form_radius' => '0.75rem',
+            'theme_table_header_bg' => '#0f172a',
+            'theme_table_header_text' => '#e2e8f0',
+            'theme_table_row_bg' => '#111827',
+            'theme_table_row_alt' => '#0f172a',
+            'theme_table_row_hover' => '#1e293b',
+            'theme_table_border' => '#334155',
+            'theme_admin_sidebar_bg' => '#020617',
+            'theme_admin_sidebar_text' => '#cbd5e1',
+            'theme_admin_sidebar_active' => '#4f46e5',
+            'theme_admin_sidebar_hover' => '#1e293b',
+            'theme_admin_navbar_bg' => '#0f172a',
+            'theme_admin_cards_bg' => '#111827',
+            'theme_admin_buttons_bg' => '#4f46e5',
+            'theme_admin_forms_bg' => '#0f172a',
+            'theme_admin_tables_bg' => '#111827',
+            'theme_admin_widgets_bg' => '#111827',
+            'theme_backend_primary' => '#6366f1',
+            'theme_backend_primary_hover' => '#4f46e5',
+            'theme_dark_mode' => 'auto',
+            'theme_dark_body_bg' => '#020617',
+            'theme_dark_surface_bg' => '#0f172a',
+            'theme_dark_card_bg' => '#111827',
+            'theme_dark_header_bg' => '#0f172a',
+            'theme_dark_footer_bg' => '#020617',
+            'theme_dark_buttons_bg' => '#4f46e5',
+            'theme_dark_forms_bg' => '#0f172a',
+            'theme_dark_sidebar_bg' => '#020617',
+            'theme_dark_text' => '#e2e8f0',
+        ];
+    }
+
+    public static function themeSettings(): array
+    {
+        $themeSettings = SiteSettings::get('theme_settings', []);
+        $merged = array_merge(self::defaults(), is_array($themeSettings) ? $themeSettings : []);
+
+        foreach (array_keys(self::defaults()) as $key) {
+            $legacyValue = SiteSettings::get($key, null);
+            if ($legacyValue !== null) {
+                $merged[$key] = $legacyValue;
+            }
+        }
+
+        return $merged;
+    }
+
+    public static function adminThemeSettings(): array
+    {
+        $themeSettings = self::themeSettings();
+        $adminOverrides = SiteSettings::get('admin_theme_settings', []);
+
+        if (!is_array($adminOverrides)) {
+            $adminOverrides = [];
+        }
+
+        return array_merge($themeSettings, $adminOverrides);
+    }
+
+    public static function cssVariables(array $settings): string
+    {
+        $output = '';
+        foreach ($settings as $key => $value) {
+            $varName = '--' . str_replace('_', '-', $key);
+            $output .= $varName . ': ' . $value . ";\n";
+        }
+        return trim($output);
+    }
+}

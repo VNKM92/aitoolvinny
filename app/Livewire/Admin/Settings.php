@@ -28,6 +28,14 @@ class Settings extends Component
     public array $supportedLocales = [];
     public string $newLocale = '';
 
+    // Dynamic Theme Settings
+    public string $themePrimary = '#4f46e5';
+    public string $themePrimaryHover = '#4338ca';
+    public string $themeHeaderBg = '#020617';
+    public string $themeFooterBg = '#020617';
+    public string $themeBackendPrimary = '#6366f1';
+    public string $themeBackendPrimaryHover = '#4f46e5';
+
     protected array $rules = [
         'siteName' => 'required|string|max:255',
         'metaDescription' => 'nullable|string|max:500',
@@ -37,6 +45,12 @@ class Settings extends Component
         'adsenseSidebarSlot' => 'nullable|string|max:100',
         'adsenseArticleSlot' => 'nullable|string|max:100',
         'defaultLocale' => 'required|string|max:5',
+        'themePrimary' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+        'themePrimaryHover' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+        'themeHeaderBg' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+        'themeFooterBg' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+        'themeBackendPrimary' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+        'themeBackendPrimaryHover' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
     ];
 
     public function mount()
@@ -51,6 +65,17 @@ class Settings extends Component
         $this->adsenseTopSlot = SiteSettings::get('adsense_top_slot', '');
         $this->adsenseSidebarSlot = SiteSettings::get('adsense_sidebar_slot', '');
         $this->adsenseArticleSlot = SiteSettings::get('adsense_article_slot', '');
+
+        // Load dynamic theme options from the unified theme settings service.
+        $themeSettings = \App\Services\ThemeService::themeSettings();
+        $adminThemeSettings = \App\Services\ThemeService::adminThemeSettings();
+
+        $this->themePrimary = $themeSettings['theme_primary'] ?? '#4f46e5';
+        $this->themePrimaryHover = $themeSettings['theme_primary_hover'] ?? '#4338ca';
+        $this->themeHeaderBg = $themeSettings['theme_header_bg'] ?? '#020617';
+        $this->themeFooterBg = $themeSettings['theme_footer_bg'] ?? '#020617';
+        $this->themeBackendPrimary = $adminThemeSettings['theme_backend_primary'] ?? '#6366f1';
+        $this->themeBackendPrimaryHover = $adminThemeSettings['theme_backend_primary_hover'] ?? '#4f46e5';
     }
 
     public function addLocale()
@@ -93,6 +118,39 @@ class Settings extends Component
         SiteSettings::set('adsense_sidebar_slot', $this->adsenseSidebarSlot);
         SiteSettings::set('adsense_article_slot', $this->adsenseArticleSlot);
 
+        // Save theme settings using unified settings objects and preserve legacy keys for backward compatibility.
+        $currentThemeSettings = SiteSettings::get('theme_settings', []);
+        if (!is_array($currentThemeSettings)) {
+            $currentThemeSettings = [];
+        }
+
+        $currentAdminThemeSettings = SiteSettings::get('admin_theme_settings', []);
+        if (!is_array($currentAdminThemeSettings)) {
+            $currentAdminThemeSettings = [];
+        }
+
+        $updatedThemeSettings = array_merge($currentThemeSettings, [
+            'theme_primary' => $this->themePrimary,
+            'theme_primary_hover' => $this->themePrimaryHover,
+            'theme_header_bg' => $this->themeHeaderBg,
+            'theme_footer_bg' => $this->themeFooterBg,
+        ]);
+
+        $updatedAdminThemeSettings = array_merge($currentAdminThemeSettings, [
+            'theme_backend_primary' => $this->themeBackendPrimary,
+            'theme_backend_primary_hover' => $this->themeBackendPrimaryHover,
+        ]);
+
+        SiteSettings::set('theme_settings', $updatedThemeSettings);
+        SiteSettings::set('admin_theme_settings', $updatedAdminThemeSettings);
+
+        SiteSettings::set('theme_primary', $this->themePrimary);
+        SiteSettings::set('theme_primary_hover', $this->themePrimaryHover);
+        SiteSettings::set('theme_header_bg', $this->themeHeaderBg);
+        SiteSettings::set('theme_footer_bg', $this->themeFooterBg);
+        SiteSettings::set('theme_backend_primary', $this->themeBackendPrimary);
+        SiteSettings::set('theme_backend_primary_hover', $this->themeBackendPrimaryHover);
+
         // 2. Handle Logo Upload
         if ($this->logo) {
             $logoPath = $this->logo->store('branding', 'public');
@@ -101,7 +159,7 @@ class Settings extends Component
             $this->existingLogo = $logoUrl;
         }
 
-        ActivityLogger::log('settings_updated', 'Updated site configuration preferences');
+        ActivityLogger::log('settings_updated', 'Updated site configuration and theme colors');
         
         session()->flash('message', 'Settings updated successfully.');
     }

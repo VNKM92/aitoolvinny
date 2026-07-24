@@ -54,6 +54,15 @@
     </style>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    @php
+        $themeSettings = \App\Services\ThemeService::themeSettings();
+    @endphp
+    <style>
+        :root {
+            {!! \App\Services\ThemeService::cssVariables($themeSettings) !!}
+        }
+    </style>
+
     <!-- Google AdSense script integration -->
     @if(!empty($adsenseClientId))
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client={{ $adsenseClientId }}" crossorigin="anonymous"></script>
@@ -86,7 +95,7 @@
                   <div class="text-sm text-slate-300">{!! $activePopup->content[$locale] ?? reset($activePopup->content) !!}</div>
                   <div class="flex justify-end pt-2">
                        <button @click="show = false; localStorage.setItem('popup_dismissed_{{ $activePopup->id }}', 'true')"
-                               class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs font-semibold text-white transition-colors">
+                               class="px-4 py-2 bg-primary hover:bg-primary-hover rounded-lg text-xs font-semibold text-white transition-colors">
                              Dismiss
                        </button>
                   </div>
@@ -96,7 +105,7 @@
 
     <!-- Announcement Bar -->
     @if(!empty($announcementText))
-        <div class="bg-gradient-to-r from-indigo-650 to-pink-600 text-center py-2 text-xs font-bold text-white relative z-20 shadow-md">
+        <div class="bg-primary text-center py-2 text-xs font-bold text-white relative z-20 shadow-md">
             {{ $announcementText }}
         </div>
     @endif
@@ -106,13 +115,13 @@
     <div class="absolute top-[800px] left-[-10%] w-[50%] h-[500px] rounded-full bg-pink-900/5 blur-[130px] pointer-events-none"></div>
 
     <!-- Navigation Header -->
-    <nav class="relative z-10 border-b border-slate-900/80 bg-slate-950/80 backdrop-blur-md sticky top-0">
+    <nav class="relative z-10 border-b border-slate-900/80 bg-header-bg backdrop-blur-md sticky top-0">
         <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
             <a href="{{ route('tenant.home', ['locale' => $locale]) }}" class="flex items-center space-x-3">
                 @if(!empty($siteLogo))
                     <img src="{{ $siteLogo }}" alt="{{ $siteName }}" class="h-8 w-auto">
                 @else
-                    <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-pink-500">
+                    <span class="text-xl font-bold text-primary">
                         {{ $siteName }}
                     </span>
                 @endif
@@ -120,9 +129,9 @@
 
             <!-- Menu Links -->
             <div class="hidden md:flex items-center space-x-6">
-                <a href="{{ route('tenant.home', ['locale' => $locale]) }}" class="text-sm font-semibold hover:text-indigo-400 transition-colors">Home</a>
+                <a href="{{ route('tenant.home', ['locale' => $locale]) }}" class="text-sm font-semibold hover:text-primary transition-colors">Home</a>
                 @foreach($pages as $p)
-                    <a href="{{ route('tenant.page', ['slug' => $p->slug, 'locale' => $locale]) }}" class="text-sm font-semibold hover:text-indigo-400 transition-colors">
+                    <a href="{{ route('tenant.page', ['slug' => $p->slug, 'locale' => $locale]) }}" class="text-sm font-semibold hover:text-primary transition-colors">
                         {{ $p->title[$locale] ?? reset($p->title) }}
                     </a>
                 @endforeach
@@ -186,15 +195,15 @@
     </div>
 
     <!-- Footer -->
-    <footer class="border-t border-slate-900 bg-slate-950 mt-12">
+    <footer class="border-t border-slate-900 bg-footer-bg mt-12">
         <div class="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between text-xs text-slate-500">
             <div>
                 &copy; {{ date('Y') }} {{ $siteName }}. All rights reserved.
             </div>
             <div class="flex space-x-4 mt-4 sm:mt-0">
-                <a href="{{ route('tenant.home', ['locale' => $locale]) }}" class="hover:text-slate-300">Home</a>
+                <a href="{{ route('tenant.home', ['locale' => $locale]) }}" class="hover:text-primary">Home</a>
                 @foreach($pages as $p)
-                    <a href="{{ route('tenant.page', ['slug' => $p->slug, 'locale' => $locale]) }}" class="hover:text-slate-300">
+                    <a href="{{ route('tenant.page', ['slug' => $p->slug, 'locale' => $locale]) }}" class="hover:text-primary">
                         {{ $p->title[$locale] ?? reset($p->title) }}
                     </a>
                 @endforeach
