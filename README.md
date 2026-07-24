@@ -1,59 +1,183 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# SaaS Multi-Tenant CMS (Laravel 12 + Livewire + Tailwind CSS v4)
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A SaaS-grade, production-ready multi-tenant Content Management System built with **Laravel 12**, **PHP 8.4** (compatible with PHP 8.2+), **MySQL/MariaDB**, **Tailwind CSS v4**, **Livewire**, and **Alpine.js**.
 
-## About Laravel
+The platform allows a single Super Admin to provision, manage, and scale unlimited websites from a single central dashboard. Each tenant site supports custom domain mapping, multi-language localization, automatic SEO optimization, and configurable Google AdSense placements.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## 🏗️ Architecture Design
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+The platform uses a **Single Database (Shared Schema) Multi-Tenant Model** with **Global Query Scoping**. 
 
-## Learning Laravel
+```
+                               Incoming Request
+                                      │
+                                      ▼
+                        [IdentifyTenant Middleware]
+                                      │
+       ┌──────────────────────────────┴──────────────────────────────┐
+       ▼ (Central Hostname)                                          ▼ (Tenant Hostname)
+ SaaS Central App                                             Tenant Resolved Context
+  ├── Landing Page (/)                                         ├── Database: Scoped via TenantScope
+  └── Super Admin Dashboard (/admin)                           ├── Locale: Configured via SetLocale
+       ├── Website Provisioner                                 ├── Public Frontend (Theme Wrapper)
+       └── Custom Domain Mapping                               └── Tenant Admin Dashboard (/admin)
+                                                                    ├── Category Editor
+                                                                    ├── Blog Post Composer
+                                                                    ├── Static Page Creator
+                                                                    └── AdSense Configuration
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+### Key Components
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. **Tenant Resolution**: Resolves tenants at the middleware level (`IdentifyTenant.php`) by matching the request domain against custom domains (`tenant_domains`) or fallback subdomains (`tenants`). The resolved tenant is cached for maximum speed.
+2. **Database Scoping**: Scoped models implement the `BelongsToTenant` trait. A global query scope (`TenantScope.php`) intercepts all Eloquent commands to inject `where('tenant_id', $activeTenantId)` conditions dynamically.
+3. **Data Access Isolation**: Repositories abstract raw database operations, keeping controllers/Livewire modules decoupled from database queries.
+4. **Translations (Localization)**: Localized fields (Titles, Contents, SEO Meta) are stored as JSON maps (e.g., `{"en": "Hello", "es": "Hola"}`). The system sets locales dynamically based on URL prefixes (e.g. `/es/...`).
+5. **Caching Layer**: Caches sitemaps, static pages, and blog queries. Caches are invalidated instantly on content CRUD updates.
 
-## Laravel Sponsors
+---
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+## 📁 Directory Structure
 
-### Premium Partners
+Key files and directories created for this application:
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```text
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── SitemapController.php     # Dynamic XML sitemap generator per tenant
+│   │   │   └── TenantController.php      # Main public controller for tenant sites
+│   │   └── Middleware/
+│   │       ├── EnsureSuperAdmin.php      # Guard for SaaS Super Admin routes
+│   │       ├── IdentifyTenant.php        # Hostname resolver and tenant context initiator
+│   │       └── SetLocale.php             # Route-prefix language configuration
+│   ├── Livewire/
+│   │   ├── Admin/
+│   │   │   ├── Categories.php            # Multilingual category management
+│   │   │   ├── Dashboard.php             # adapts to Super Admin or Tenant Admin
+│   │   │   ├── Pages.php                 # Static page management
+│   │   │   ├── Posts.php                 # Localized blog posts + image upload
+│   │   │   └── Settings.php              # Theme, locales, and AdSense slot config
+│   │   └── Auth/
+│   │       └── Login.php                 # Unified authentication module
+│   ├── Models/
+│   │   ├── Scopes/
+│   │   │   └── TenantScope.php           # Scoping Eloquent query builder
+│   │   ├── Tenant.php                    # Central Tenant website model
+│   │   ├── TenantDomain.php              # Mapping custom hostnames to tenants
+│   │   └── Category, Post, Page, Menu... # Tenant-scoped content models
+│   ├── Providers/
+│   │   └── AppServiceProvider.php        # Registering TenantManager and Repository binds
+│   ├── Repositories/
+│   │   ├── Contracts/                    # Repository interface declarations (SOLID)
+│   │   └── Eloquent/                     # Concrete Eloquent implementations
+│   ├── Services/
+│   │   ├── PostService, PageService.php  # Handles business logic and cache maps
+│   │   ├── SEOService.php                # Generates HTML meta tags & JSON-LD schemas
+│   │   └── TenantManager.php             # In-memory tenant registry and cache helper
+│   └── Traits/
+│       └── BelongsToTenant.php           # Trait applied to all tenant models
+├── config/
+│   └── tenancy.php                       # Central domain mapping configuration
+├── database/
+│   ├── migrations/                       # Correctly ordered DB schemas
+│   └── seeders/
+│       └── DatabaseSeeder.php            # Pre-populates Super Admin and sample Tenant
+├── resources/
+│   ├── css/app.css                       # Tailwind CSS v4 assets
+│   └── views/
+│       ├── components/
+│       │   └── tenant-layout.blade.php   # Public tenant site layout wrapper
+│       ├── central_welcome.blade.php     # central SaaS landing page view
+│       └── livewire/                     # Blade layouts for all Livewire components
+└── routes/
+    └── web.php                           # SaaS domain-separated routing definitions
+```
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## 🗄️ Database Schemas
 
-## Code of Conduct
+### Central SaaS Tables
+- **`tenants`**: `id`, `name`, `subdomain` (unique), `is_active`, `default_locale`, `supported_locales` (JSON), `settings` (JSON for branding/AdSense), `timestamps`.
+- **`tenant_domains`**: `id`, `tenant_id` (FK), `domain` (unique), `is_primary`, `timestamps`.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Shared Scoped Tables
+- **`users`**: `id`, `tenant_id` (nullable, index), `name`, `email` (unique), `password`, `role` (`super_admin` vs `tenant_admin`), `remember_token`, `timestamps`.
+- **`categories`**: `id`, `tenant_id` (FK), `name` (JSON), `slug` (unique per tenant), `timestamps`.
+- **`posts`**: `id`, `tenant_id` (FK), `category_id` (nullable FK), `title` (JSON), `slug` (unique per tenant), `content` (JSON), `featured_image`, `status` (`draft` / `published`), `meta_title` (JSON), `meta_description` (JSON), `adsense_enabled`, `published_at`, `timestamps`.
+- **`pages`**: `id`, `tenant_id` (FK), `title` (JSON), `slug` (unique per tenant), `content` (JSON), `status`, `meta_title` (JSON), `meta_description` (JSON), `timestamps`.
 
-## Security Vulnerabilities
+---
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## 🚀 Setup & Installation
 
-## License
+### 1. Configure the Environment
+Ensure your local environment runs PHP 8.2+ and MariaDB/MySQL is active (the default XAMPP setup uses port `3307`).
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Modify your `.env` file database settings:
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3307
+DB_DATABASE=aitoolvinny_cms
+DB_USERNAME=root
+DB_PASSWORD=
+```
+
+### 2. Map Hostnames (hosts file)
+For development, map local mock hostnames inside your operating system's hosts file (e.g. `C:\Windows\System32\drivers\etc\hosts` on Windows):
+```text
+127.0.0.1 central.local
+127.0.0.1 devblog.localhost
+```
+
+### 3. Run Migrations and Seeders
+Execute the database setup:
+```bash
+php artisan migrate:fresh --seed
+```
+This drops existing tables, creates the schemas, and seeds default administrators.
+
+### 4. Build Frontend Assets
+Compile Tailwind CSS v4 assets:
+```bash
+npm install
+npm run build
+```
+
+### 5. Serve the Site
+Launch the PHP development server:
+```bash
+php artisan serve --port=80
+```
+
+---
+
+## 🔑 Default Credentials
+
+- **Central SaaS Admin Panel**: Visit `http://central.local/login`
+  - **Email**: `admin@saas.com`
+  - **Password**: `password`
+  - *Provides: Super Admin control to create new websites and map hostnames.*
+
+- **Tenant Blog Dashboard**: Visit `http://devblog.localhost/login`
+  - **Email**: `editor@devblog.com`
+  - **Password**: `password`
+  - *Provides: Scoped Tenant access to write articles, create pages, manage taxonomy, modify languages, and configure Google AdSense slot IDs.*
+
+---
+
+## 🧪 Testing & Code Quality
+
+Automated feature tests verify:
+- **Subdomain and custom domain tenant resolution**.
+- **Database isolation** (ensuring Tenant A query boundaries prevent seeing Tenant B data).
+- **Localized path resolution** (matching URL segments like `/es` and setting matching locales).
+
+Run tests at any time using:
+```bash
+php artisan test
+```
