@@ -45,6 +45,18 @@
     </script>
     @endif
 
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+
+    <!-- Critical CSS -->
+    @php
+        $criticalCss = \App\Services\SiteSettings::get('critical_css', '');
+    @endphp
+    @if(!empty($criticalCss))
+    <style>{!! $criticalCss !!}</style>
+    @endif
+
     <title>{{ $seo['title'] ?? $siteName }}</title>
     
     <!-- Dynamic SEO Meta Tags -->
@@ -243,5 +255,17 @@
     @if(!empty($footerInjection))
     {!! $footerInjection !!}
     @endif
+    <!-- PWA Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then((reg) => {
+                    console.log('ServiceWorker registered successfully', reg.scope);
+                }).catch((err) => {
+                    console.warn('ServiceWorker registration failed', err);
+                });
+            });
+        }
+    </script>
 </body>
 </html>

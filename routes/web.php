@@ -54,6 +54,16 @@ Route::get('/sitemap-images.xml', [SitemapController::class, 'images'])->name('t
 Route::get('/sitemap-news.xml', [SitemapController::class, 'news'])->name('tenant.sitemap.news');
 Route::get('/robots.txt', [SitemapController::class, 'robots'])->name('tenant.robots');
 Route::get('/feed', [SitemapController::class, 'feed'])->name('tenant.feed');
+Route::get('/manifest.json', function () {
+    return response(file_get_contents(public_path('manifest.json')), 200, [
+        'Content-Type' => 'application/json'
+    ]);
+});
+Route::get('/sw.js', function () {
+    return response(file_get_contents(public_path('sw.js')), 200, [
+        'Content-Type' => 'application/javascript'
+    ]);
+});
 
 // 4. Prefixed Localized Public Front Routing (e.g. site.com/es/...)
 Route::prefix('{locale}')->middleware([\App\Http\Middleware\SetLocale::class])->group(function () {
