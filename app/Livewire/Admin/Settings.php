@@ -33,8 +33,12 @@ class Settings extends Component
     public string $themePrimaryHover = '#4338ca';
     public string $themeHeaderBg = '#020617';
     public string $themeFooterBg = '#020617';
+    public string $themeBodyBg = '#020617';
+    public string $themeBodyText = '#e2e8f0';
     public string $themeBackendPrimary = '#6366f1';
     public string $themeBackendPrimaryHover = '#4f46e5';
+    public string $themeAdminBodyBg = '#020617';
+    public string $themeAdminBodyText = '#e2e8f0';
 
     protected array $rules = [
         'siteName' => 'required|string|max:255',
@@ -49,8 +53,12 @@ class Settings extends Component
         'themePrimaryHover' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
         'themeHeaderBg' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
         'themeFooterBg' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+        'themeBodyBg' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+        'themeBodyText' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
         'themeBackendPrimary' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
         'themeBackendPrimaryHover' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+        'themeAdminBodyBg' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
+        'themeAdminBodyText' => 'required|string|regex:/^#[a-fA-F0-9]{6}$/',
     ];
 
     public function mount()
@@ -74,8 +82,12 @@ class Settings extends Component
         $this->themePrimaryHover = $themeSettings['theme_primary_hover'] ?? '#4338ca';
         $this->themeHeaderBg = $themeSettings['theme_header_bg'] ?? '#020617';
         $this->themeFooterBg = $themeSettings['theme_footer_bg'] ?? '#020617';
+        $this->themeBodyBg = $themeSettings['theme_body_bg'] ?? '#020617';
+        $this->themeBodyText = $themeSettings['theme_body_text'] ?? '#e2e8f0';
         $this->themeBackendPrimary = $adminThemeSettings['theme_backend_primary'] ?? '#6366f1';
         $this->themeBackendPrimaryHover = $adminThemeSettings['theme_backend_primary_hover'] ?? '#4f46e5';
+        $this->themeAdminBodyBg = $adminThemeSettings['theme_admin_body_bg'] ?? '#020617';
+        $this->themeAdminBodyText = $adminThemeSettings['theme_admin_body_text'] ?? '#e2e8f0';
     }
 
     public function addLocale()
@@ -134,11 +146,15 @@ class Settings extends Component
             'theme_primary_hover' => $this->themePrimaryHover,
             'theme_header_bg' => $this->themeHeaderBg,
             'theme_footer_bg' => $this->themeFooterBg,
+            'theme_body_bg' => $this->themeBodyBg,
+            'theme_body_text' => $this->themeBodyText,
         ]);
 
         $updatedAdminThemeSettings = array_merge($currentAdminThemeSettings, [
             'theme_backend_primary' => $this->themeBackendPrimary,
             'theme_backend_primary_hover' => $this->themeBackendPrimaryHover,
+            'theme_admin_body_bg' => $this->themeAdminBodyBg,
+            'theme_admin_body_text' => $this->themeAdminBodyText,
         ]);
 
         SiteSettings::set('theme_settings', $updatedThemeSettings);
@@ -148,8 +164,12 @@ class Settings extends Component
         SiteSettings::set('theme_primary_hover', $this->themePrimaryHover);
         SiteSettings::set('theme_header_bg', $this->themeHeaderBg);
         SiteSettings::set('theme_footer_bg', $this->themeFooterBg);
+        SiteSettings::set('theme_body_bg', $this->themeBodyBg);
+        SiteSettings::set('theme_body_text', $this->themeBodyText);
         SiteSettings::set('theme_backend_primary', $this->themeBackendPrimary);
         SiteSettings::set('theme_backend_primary_hover', $this->themeBackendPrimaryHover);
+        SiteSettings::set('theme_admin_body_bg', $this->themeAdminBodyBg);
+        SiteSettings::set('theme_admin_body_text', $this->themeAdminBodyText);
 
         // 2. Handle Logo Upload
         if ($this->logo) {

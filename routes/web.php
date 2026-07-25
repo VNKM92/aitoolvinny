@@ -19,6 +19,9 @@ use App\Http\Controllers\TenantController;
 use App\Livewire\Admin\AIGenerator;
 use App\Livewire\Admin\Monetization;
 use App\Http\Controllers\MonetizationController;
+use App\Http\Controllers\ToolsController;
+use App\Http\Controllers\Api\ToolsApiController;
+use App\Livewire\Admin\ToolsManager;
 use Illuminate\Support\Facades\Auth;
 
 // 1. Guest Authentication Routes
@@ -42,6 +45,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/admin/settings', Settings::class)->name('admin.settings');
     Route::get('/admin/ai', AIGenerator::class)->name('admin.ai');
     Route::get('/admin/monetization', Monetization::class)->name('admin.monetization');
+    Route::get('/admin/tools', ToolsManager::class)->name('admin.tools');
 
     Route::get('/logout', function () {
         Auth::logout();
@@ -71,12 +75,41 @@ Route::get('/sw.js', function () {
 Route::get('/ad-click/{id}', [MonetizationController::class, 'adClick'])->name('tenant.ad.click');
 Route::get('/go/{slug}', [MonetizationController::class, 'affiliateRedirect'])->name('tenant.affiliate.redirect');
 
+// 20 free web tools API endpoints
+Route::prefix('api/tools')->middleware('throttle:60,1')->group(function () {
+    Route::post('/qr-code', [ToolsApiController::class, 'qrCode']);
+    Route::post('/password', [ToolsApiController::class, 'password']);
+    Route::post('/uuid', [ToolsApiController::class, 'uuid']);
+    Route::post('/base64-encode', [ToolsApiController::class, 'base64Encode']);
+    Route::post('/base64-decode', [ToolsApiController::class, 'base64Decode']);
+    Route::post('/json-formatter', [ToolsApiController::class, 'jsonFormatter']);
+    Route::post('/sql-formatter', [ToolsApiController::class, 'sqlFormatter']);
+    Route::post('/html-formatter', [ToolsApiController::class, 'htmlFormatter']);
+    Route::post('/css-minify', [ToolsApiController::class, 'cssMinifier']);
+    Route::post('/js-beautify', [ToolsApiController::class, 'jsBeautifier']);
+    Route::post('/word-counter', [ToolsApiController::class, 'wordCounter']);
+    Route::post('/slug-generator', [ToolsApiController::class, 'slugGenerator']);
+    Route::post('/lorem-ipsum', [ToolsApiController::class, 'loremIpsum']);
+    Route::post('/age-calculator', [ToolsApiController::class, 'ageCalculator']);
+    Route::post('/emi-calculator', [ToolsApiController::class, 'emiCalculator']);
+    Route::post('/gst-calculator', [ToolsApiController::class, 'gstCalculator']);
+    Route::post('/percentage-calculator', [ToolsApiController::class, 'percentageCalculator']);
+    Route::post('/image-compress', [ToolsApiController::class, 'imageCompress']);
+});
+
+Route::middleware([\App\Http\Middleware\SetLocale::class])->group(function () {
+    Route::get('/tools', [ToolsController::class, 'index'])->name('tenant.tools.index');
+    Route::get('/tools/{slug}', [ToolsController::class, 'show'])->name('tenant.tools.show');
+});
+
 // 4. Prefixed Localized Public Front Routing (e.g. site.com/es/...)
 Route::prefix('{locale}')->middleware([\App\Http\Middleware\SetLocale::class])->group(function () {
     Route::get('/', [TenantController::class, 'home'])->name('tenant.home.locale');
     Route::get('/posts/{slug}', [TenantController::class, 'post'])->name('tenant.post.locale');
     Route::get('/pages/{slug}', [TenantController::class, 'page'])->name('tenant.page.locale');
     Route::get('/categories/{slug}', [TenantController::class, 'category'])->name('tenant.category.locale');
+    Route::get('/tools', [ToolsController::class, 'index'])->name('tenant.tools.index.locale');
+    Route::get('/tools/{slug}', [ToolsController::class, 'show'])->name('tenant.tools.show.locale');
 });
 
 // 5. Unprefixed Default Localized Public Front Routing (e.g. site.com/...)
