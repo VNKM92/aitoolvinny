@@ -22,15 +22,27 @@ class Posts extends Component
     public array $titles = [];
     public string $slug = '';
     public array $contents = [];
+    public array $excerpts = [];
     public ?int $category_id = null;
+    public ?int $subcategory_id = null;
     public string $status = 'draft';
     public array $meta_titles = [];
     public array $meta_descriptions = [];
     public bool $adsense_enabled = true;
     public ?string $published_at = null;
-    
+
     public $featured_image;
     public ?string $existing_featured_image = null;
+
+    // Per-post theme overrides (8 keys, nullable means inherit from global)
+    public ?string $theme_body_bg = null;
+    public ?string $theme_body_text = null;
+    public ?string $theme_header_bg = null;
+    public ?string $theme_footer_bg = null;
+    public ?string $theme_primary = null;
+    public ?string $theme_accent = null;
+    public ?string $theme_section_bg = null;
+    public ?string $theme_card_bg = null;
 
     public ?int $editingPostId = null;
     public bool $isCreating = false;
@@ -55,15 +67,40 @@ class Posts extends Component
             'titles.*' => 'required|string|max:255',
             'slug' => 'required|string|alpha_dash|unique:posts,slug,' . ($this->editingPostId ?: 'NULL'),
             'contents.*' => 'required|string',
+            'excerpts.*' => 'nullable|string|max:500',
             'category_id' => 'nullable|exists:categories,id',
+            'subcategory_id' => 'nullable|exists:subcategories,id',
             'status' => 'required|in:draft,published',
             'meta_titles.*' => 'nullable|string|max:255',
             'meta_descriptions.*' => 'nullable|string|max:500',
             'adsense_enabled' => 'boolean',
             'published_at' => 'nullable|date',
-            'featured_image' => 'nullable|image|max:2048', // 2MB max
+            'featured_image' => 'nullable|image|max:2048',
             'selectedTags' => 'array',
+            'theme_body_bg' => 'nullable|string|max:9|starts_with:#',
+            'theme_body_text' => 'nullable|string|max:9|starts_with:#',
+            'theme_header_bg' => 'nullable|string|max:9|starts_with:#',
+            'theme_footer_bg' => 'nullable|string|max:9|starts_with:#',
+            'theme_primary' => 'nullable|string|max:9|starts_with:#',
+            'theme_accent' => 'nullable|string|max:9|starts_with:#',
+            'theme_section_bg' => 'nullable|string|max:9|starts_with:#',
+            'theme_card_bg' => 'nullable|string|max:9|starts_with:#',
         ];
+    }
+
+    public function updatedCategoryId()
+    {
+        // Clear subcategory if it no longer belongs to the newly selected parent category
+        if ($this->subcategory_id && $this->category_id) {
+            $valid = \App\Models\Subcategory::where('id', $this->subcategory_id)
+                ->where('category_id', $this->category_id)
+                ->exists();
+            if (!$valid) {
+                $this->subcategory_id = null;
+            }
+        } elseif (!$this->category_id) {
+            $this->subcategory_id = null;
+        }
     }
 
     public function mount()
@@ -76,18 +113,21 @@ class Posts extends Component
     {
         $this->titles = [];
         $this->contents = [];
+        $this->excerpts = [];
         $this->meta_titles = [];
         $this->meta_descriptions = [];
 
         foreach ($this->supportedLocales as $locale) {
             $this->titles[$locale] = '';
             $this->contents[$locale] = '';
+            $this->excerpts[$locale] = '';
             $this->meta_titles[$locale] = '';
             $this->meta_descriptions[$locale] = '';
         }
 
         $this->slug = '';
         $this->category_id = null;
+        $this->subcategory_id = null;
         $this->status = 'draft';
         $this->adsense_enabled = true;
         $this->published_at = date('Y-m-d\TH:i'); // default to now
@@ -97,6 +137,15 @@ class Posts extends Component
         $this->selectedTags = [];
         $this->revisions = [];
         $this->lastSavedAt = '';
+
+        $this->theme_body_bg = null;
+        $this->theme_body_text = null;
+        $this->theme_header_bg = null;
+        $this->theme_footer_bg = null;
+        $this->theme_primary = null;
+        $this->theme_accent = null;
+        $this->theme_section_bg = null;
+        $this->theme_card_bg = null;
     }
 
     public function toggleCreate()
@@ -145,6 +194,7 @@ class Posts extends Component
 
         $this->slug = $post->slug;
         $this->category_id = $post->category_id;
+        $this->subcategory_id = $post->subcategory_id;
         $this->status = $post->status;
         $this->adsense_enabled = $post->adsense_enabled;
         $this->published_at = $post->published_at ? $post->published_at->format('Y-m-d\TH:i') : null;
@@ -152,15 +202,27 @@ class Posts extends Component
 
         $this->titles = [];
         $this->contents = [];
+        $this->excerpts = [];
         $this->meta_titles = [];
         $this->meta_descriptions = [];
 
         foreach ($this->supportedLocales as $locale) {
             $this->titles[$locale] = $post->title[$locale] ?? '';
             $this->contents[$locale] = $post->content[$locale] ?? '';
+            $this->excerpts[$locale] = $post->excerpt[$locale] ?? '';
             $this->meta_titles[$locale] = $post->meta_title[$locale] ?? '';
             $this->meta_descriptions[$locale] = $post->meta_description[$locale] ?? '';
         }
+
+        // Per-post theme overrides (8 fields)
+        $this->theme_body_bg = $post->theme_body_bg;
+        $this->theme_body_text = $post->theme_body_text;
+        $this->theme_header_bg = $post->theme_header_bg;
+        $this->theme_footer_bg = $post->theme_footer_bg;
+        $this->theme_primary = $post->theme_primary;
+        $this->theme_accent = $post->theme_accent;
+        $this->theme_section_bg = $post->theme_section_bg;
+        $this->theme_card_bg = $post->theme_card_bg;
 
         // Load Tags
         $this->selectedTags = $post->tags->pluck('id')->toArray();
@@ -190,15 +252,27 @@ class Posts extends Component
 
         $postData = [
             'category_id' => $this->category_id,
+            'subcategory_id' => $this->subcategory_id,
             'title' => $this->titles,
             'slug' => $this->slug,
             'content' => $this->contents,
+            'excerpt' => $this->excerpts,
             'status' => $this->status,
             'meta_title' => $this->meta_titles,
             'meta_description' => $this->meta_descriptions,
             'adsense_enabled' => $this->adsense_enabled,
             'published_at' => $this->published_at ?: null,
         ];
+
+        // Per-post theme overrides (8 fields, nullable = inherit)
+        $postData['theme_body_bg'] = $this->theme_body_bg ?: null;
+        $postData['theme_body_text'] = $this->theme_body_text ?: null;
+        $postData['theme_header_bg'] = $this->theme_header_bg ?: null;
+        $postData['theme_footer_bg'] = $this->theme_footer_bg ?: null;
+        $postData['theme_primary'] = $this->theme_primary ?: null;
+        $postData['theme_accent'] = $this->theme_accent ?: null;
+        $postData['theme_section_bg'] = $this->theme_section_bg ?: null;
+        $postData['theme_card_bg'] = $this->theme_card_bg ?: null;
 
         // Handle image upload and optimization to WebP
         if ($this->featured_image) {
@@ -277,13 +351,19 @@ class Posts extends Component
         $categories = Category::all();
         $tags = Tag::all();
 
+        $subcategoriesQuery = \App\Models\Subcategory::active()->ordered();
+        if ($this->category_id) {
+            $subcategoriesQuery->where('category_id', $this->category_id);
+        }
+        $subcategories = $subcategoriesQuery->get(['id', 'name', 'slug', 'category_id']);
+
         if ($this->viewFilter === 'trash') {
-            $posts = Post::onlyTrashed()->with('category')->orderBy('id', 'desc')->paginate(10);
+            $posts = Post::onlyTrashed()->with(['category', 'subcategory'])->orderBy('id', 'desc')->paginate(10);
         } else {
-            $posts = Post::with('category')->orderBy('id', 'desc')->paginate(10);
+            $posts = Post::with(['category', 'subcategory'])->orderBy('id', 'desc')->paginate(10);
         }
 
-        return view('livewire.admin.posts', compact('posts', 'categories', 'tags'))
+        return view('livewire.admin.posts', compact('posts', 'categories', 'tags', 'subcategories'))
             ->layout('components.layouts.admin');
     }
 }

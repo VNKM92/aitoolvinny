@@ -369,4 +369,97 @@ class ToolsApiController extends Controller
             'base64_image' => $base64Result,
         ]);
     }
+
+    /**
+     * POST /api/tools/character-counter
+     */
+    public function characterCounter(Request $request): JsonResponse
+    {
+        $data = $request->validate(['text' => 'required|string']);
+        $text = $data['text'];
+
+        $totalChars = strlen($text);
+        $charsNoSpaces = strlen(str_replace([' ', "\t", "\n", "\r"], '', $text));
+        $words = empty(trim($text)) ? 0 : count(preg_split('/\s+/', trim($text)));
+        $lines = $text === '' ? 0 : count(explode("\n", $text));
+        $sentencesCount = 0;
+        if (!empty(trim($text))) {
+            $sentencesCount = (int) preg_match_all('/[.!?]+/', $text, $_m);
+        }
+        $paragraphsCount = 0;
+        if (!empty(trim($text))) {
+            $paragraphsCount = count(preg_split('/\n\s*\n/', trim($text)));
+        }
+        $digitsCount = (int) preg_match_all('/\d/', $text, $_d);
+        $lettersCount = (int) preg_match_all('/[A-Za-z]/', $text, $_l);
+
+        return response()->json([
+            'success' => true,
+            'total_characters' => $totalChars,
+            'characters_without_spaces' => $charsNoSpaces,
+            'words' => $words,
+            'lines' => $lines,
+            'sentences' => $sentencesCount,
+            'paragraphs' => $paragraphsCount,
+            'digits' => $digitsCount,
+            'letters' => $lettersCount,
+        ]);
+    }
+
+    /**
+     * POST /api/tools/random-password
+     */
+    public function randomPassword(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'count' => 'nullable|integer|min:1|max:20',
+            'length' => 'nullable|integer|min:8|max:64',
+            'numbers' => 'nullable|boolean',
+            'symbols' => 'nullable|boolean',
+            'uppercase' => 'nullable|boolean',
+            'lowercase' => 'nullable|boolean',
+            'exclude_ambiguous' => 'nullable|boolean',
+        ]);
+
+        $count = $data['count'] ?? 5;
+        $length = $data['length'] ?? 16;
+        $useNumbers = $data['numbers'] ?? true;
+        $useSymbols = $data['symbols'] ?? true;
+        $useUpper = $data['uppercase'] ?? true;
+        $useLower = $data['lowercase'] ?? true;
+        $noAmbiguous = $data['exclude_ambiguous'] ?? false;
+
+        $lower = 'abcdefghijkmnpqrstuvwxyz';
+        $upper = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        $nums = '23456789';
+        $sym = '!@#$%^&*()_+-=[]{};:,.<>?';
+
+        if (!$noAmbiguous) {
+            $lower = 'abcdefghijklmnopqrstuvwxyz';
+            $upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            $nums = '0123456789';
+        }
+
+        $pool = '';
+        if ($useLower) $pool .= $lower;
+        if ($useUpper) $pool .= $upper;
+        if ($useNumbers) $pool .= $nums;
+        if ($useSymbols) $pool .= $sym;
+        if ($pool === '') $pool = $lower . $upper . $nums;
+
+        $passwords = [];
+        $poolLen = strlen($pool) - 1;
+        for ($p = 0; $p < $count; $p++) {
+            $pwd = '';
+            for ($i = 0; $i < $length; $i++) {
+                $pwd .= $pool[random_int(0, $poolLen)];
+            }
+            $passwords[] = $pwd;
+        }
+
+        return response()->json([
+            'success' => true,
+            'passwords' => $passwords,
+        ]);
+    }
 }

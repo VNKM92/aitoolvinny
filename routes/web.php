@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Livewire\Auth\Login;
 use App\Livewire\Admin\Dashboard;
 use App\Livewire\Admin\Categories;
+use App\Livewire\Admin\Subcategories;
 use App\Livewire\Admin\Posts;
 use App\Livewire\Admin\Pages;
 use App\Livewire\Admin\Settings;
@@ -23,6 +24,7 @@ use App\Http\Controllers\ToolsController;
 use App\Http\Controllers\Api\ToolsApiController;
 use App\Livewire\Admin\ToolsManager;
 use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\NewsletterController;
 
 // 1. Guest Authentication Routes
 Route::middleware(['guest'])->group(function () {
@@ -33,6 +35,7 @@ Route::middleware(['guest'])->group(function () {
 Route::middleware(['auth'])->group(function () {
     Route::get('/admin', Dashboard::class)->name('admin.dashboard');
     Route::get('/admin/categories', Categories::class)->name('admin.categories');
+    Route::get('/admin/subcategories', Subcategories::class)->name('admin.subcategories');
     Route::get('/admin/posts', Posts::class)->name('admin.posts');
     Route::get('/admin/pages', Pages::class)->name('admin.pages');
     Route::get('/admin/media', MediaManager::class)->name('admin.media');
@@ -72,6 +75,7 @@ Route::get('/sw.js', function () {
     ]);
 });
 
+Route::post('/newsletter/subscribe', [NewsletterController::class, 'subscribe'])->name('tenant.newsletter.subscribe');
 Route::get('/ad-click/{id}', [MonetizationController::class, 'adClick'])->name('tenant.ad.click');
 Route::get('/go/{slug}', [MonetizationController::class, 'affiliateRedirect'])->name('tenant.affiliate.redirect');
 
@@ -95,6 +99,8 @@ Route::prefix('api/tools')->middleware('throttle:60,1')->group(function () {
     Route::post('/gst-calculator', [ToolsApiController::class, 'gstCalculator']);
     Route::post('/percentage-calculator', [ToolsApiController::class, 'percentageCalculator']);
     Route::post('/image-compress', [ToolsApiController::class, 'imageCompress']);
+    Route::post('/character-counter', [ToolsApiController::class, 'characterCounter']);
+    Route::post('/random-password', [ToolsApiController::class, 'randomPassword']);
 });
 
 Route::middleware([\App\Http\Middleware\SetLocale::class])->group(function () {
@@ -108,6 +114,7 @@ Route::prefix('{locale}')->middleware([\App\Http\Middleware\SetLocale::class])->
     Route::get('/posts/{slug}', [TenantController::class, 'post'])->name('tenant.post.locale');
     Route::get('/pages/{slug}', [TenantController::class, 'page'])->name('tenant.page.locale');
     Route::get('/categories/{slug}', [TenantController::class, 'category'])->name('tenant.category.locale');
+    Route::get('/subcategories/{slug}', [TenantController::class, 'subcategory'])->name('tenant.subcategory.locale');
     Route::get('/tools', [ToolsController::class, 'index'])->name('tenant.tools.index.locale');
     Route::get('/tools/{slug}', [ToolsController::class, 'show'])->name('tenant.tools.show.locale');
 });
@@ -118,6 +125,7 @@ Route::middleware([\App\Http\Middleware\SetLocale::class])->group(function () {
     Route::get('/posts/{slug}', [TenantController::class, 'post'])->name('tenant.post');
     Route::get('/pages/{slug}', [TenantController::class, 'page'])->name('tenant.page');
     Route::get('/categories/{slug}', [TenantController::class, 'category'])->name('tenant.category');
+    Route::get('/subcategories/{slug}', [TenantController::class, 'subcategory'])->name('tenant.subcategory');
 });
 
 // 6. Fallback route to log 404s in middleware

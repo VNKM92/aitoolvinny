@@ -3,12 +3,16 @@
 namespace App\Livewire\Admin;
 
 use App\Models\Page;
-use App\Services\TenantManager;
+use App\Services\ActivityLogger;
+use App\Services\ImageOptimizer;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Illuminate\Support\Str;
 
 class Pages extends Component
 {
+    use WithFileUploads;
+
     // Form inputs
     public array $titles = [];
     public string $slug = '';
@@ -16,6 +20,19 @@ class Pages extends Component
     public string $status = 'draft';
     public array $meta_titles = [];
     public array $meta_descriptions = [];
+
+    public $featured_image;
+    public ?string $existing_featured_image = null;
+
+    // Per-page theme overrides (8 keys, nullable = inherit global)
+    public ?string $theme_body_bg = null;
+    public ?string $theme_body_text = null;
+    public ?string $theme_header_bg = null;
+    public ?string $theme_footer_bg = null;
+    public ?string $theme_primary = null;
+    public ?string $theme_accent = null;
+    public ?string $theme_section_bg = null;
+    public ?string $theme_card_bg = null;
 
     public ?int $editingPageId = null;
     public bool $isCreating = false;
@@ -31,6 +48,15 @@ class Pages extends Component
             'status' => 'required|in:draft,published',
             'meta_titles.*' => 'nullable|string|max:255',
             'meta_descriptions.*' => 'nullable|string|max:500',
+            'featured_image' => 'nullable|image|max:2048',
+            'theme_body_bg' => 'nullable|string|max:9|starts_with:#',
+            'theme_body_text' => 'nullable|string|max:9|starts_with:#',
+            'theme_header_bg' => 'nullable|string|max:9|starts_with:#',
+            'theme_footer_bg' => 'nullable|string|max:9|starts_with:#',
+            'theme_primary' => 'nullable|string|max:9|starts_with:#',
+            'theme_accent' => 'nullable|string|max:9|starts_with:#',
+            'theme_section_bg' => 'nullable|string|max:9|starts_with:#',
+            'theme_card_bg' => 'nullable|string|max:9|starts_with:#',
         ];
     }
 
@@ -56,7 +82,18 @@ class Pages extends Component
 
         $this->slug = '';
         $this->status = 'draft';
+        $this->featured_image = null;
+        $this->existing_featured_image = null;
         $this->editingPageId = null;
+
+        $this->theme_body_bg = null;
+        $this->theme_body_text = null;
+        $this->theme_header_bg = null;
+        $this->theme_footer_bg = null;
+        $this->theme_primary = null;
+        $this->theme_accent = null;
+        $this->theme_section_bg = null;
+        $this->theme_card_bg = null;
     }
 
     public function toggleCreate()
@@ -81,6 +118,7 @@ class Pages extends Component
 
         $this->slug = $page->slug;
         $this->status = $page->status;
+        $this->existing_featured_image = $page->featured_image;
 
         $this->titles = [];
         $this->contents = [];
@@ -93,6 +131,15 @@ class Pages extends Component
             $this->meta_titles[$locale] = $page->meta_title[$locale] ?? '';
             $this->meta_descriptions[$locale] = $page->meta_description[$locale] ?? '';
         }
+
+        $this->theme_body_bg = $page->theme_body_bg;
+        $this->theme_body_text = $page->theme_body_text;
+        $this->theme_header_bg = $page->theme_header_bg;
+        $this->theme_footer_bg = $page->theme_footer_bg;
+        $this->theme_primary = $page->theme_primary;
+        $this->theme_accent = $page->theme_accent;
+        $this->theme_section_bg = $page->theme_section_bg;
+        $this->theme_card_bg = $page->theme_card_bg;
     }
 
     public function savePage()
@@ -108,17 +155,31 @@ class Pages extends Component
             'meta_description' => $this->meta_descriptions,
         ];
 
+        if ($this->featured_image) {
+            $optimizer = new ImageOptimizer();
+            $pageData['featured_image'] = $optimizer->convertToWebp($this->featured_image, 'pages');
+        }
+
+        $pageData['theme_body_bg'] = $this->theme_body_bg ?: null;
+        $pageData['theme_body_text'] = $this->theme_body_text ?: null;
+        $pageData['theme_header_bg'] = $this->theme_header_bg ?: null;
+        $pageData['theme_footer_bg'] = $this->theme_footer_bg ?: null;
+        $pageData['theme_primary'] = $this->theme_primary ?: null;
+        $pageData['theme_accent'] = $this->theme_accent ?: null;
+        $pageData['theme_section_bg'] = $this->theme_section_bg ?: null;
+        $pageData['theme_card_bg'] = $this->theme_card_bg ?: null;
+
         if ($this->editingPageId) {
             $page = Page::findOrFail($this->editingPageId);
             $page->update($pageData);
 
-            // Clear page cache
+            ActivityLogger::log('page_updated', "Updated page: {$page->slug}");
             app(\App\Services\PageService::class)->clearCache($page->slug);
             session()->flash('message', 'Page updated successfully.');
         } else {
-            Page::create($pageData);
+            $page = Page::create($pageData);
 
-            // Clear page cache
+            ActivityLogger::log('page_created', "Created page: {$page->slug}");
             app(\App\Services\PageService::class)->clearCache();
             session()->flash('message', 'Page created successfully.');
         }
@@ -133,7 +194,7 @@ class Pages extends Component
         $slug = $page->slug;
         $page->delete();
 
-        // Clear page cache
+        ActivityLogger::log('page_deleted', "Deleted page: {$slug}");
         app(\App\Services\PageService::class)->clearCache($slug);
         session()->flash('message', 'Page deleted successfully.');
     }

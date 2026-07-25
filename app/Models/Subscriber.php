@@ -11,10 +11,21 @@ class Subscriber extends Model
 
     protected $fillable = [
         'email',
+        'name',
+        'ip_address',
+        'status',
         'is_active',
+        'source',
+        'confirmed_at',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'confirmed_at' => 'datetime',
     ];
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true)->orWhere('status', 'active');
+    }
 }

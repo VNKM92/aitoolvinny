@@ -25,6 +25,10 @@ class AppServiceProvider extends ServiceProvider
             \App\Repositories\Contracts\PageRepositoryInterface::class,
             \App\Repositories\Eloquent\PageRepository::class
         );
+
+        if (file_exists($file = app_path('helpers.php'))) {
+            require_once $file;
+        }
     }
 
     /**

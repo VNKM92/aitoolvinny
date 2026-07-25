@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Category;
+use App\Models\Subcategory;
 use App\Services\PageService;
 use App\Services\PostService;
 use App\Services\SEOService;
@@ -15,7 +16,7 @@ class TenantController extends Controller
     protected SEOService $seoService;
 
     public function __construct(
-        PostService $postService, 
+        PostService $postService,
         PageService $pageService,
         SEOService $seoService
     ) {
@@ -24,105 +25,134 @@ class TenantController extends Controller
         $this->seoService = $seoService;
     }
 
-    /**
-     * Public Homepage (Blog index list).
-     */
     public function home(Request $request, ?string $locale = null)
     {
         $locale = $locale ?: app()->getLocale();
-
-        // 1. Fetch paginated posts (cached)
         $page = (int) $request->get('page', 1);
-        $posts = $this->postService->getPublishedPostsPaginated(10, $page);
 
-        // 2. Fetch page list for navigation links (cached)
+        $posts = $this->postService->getPublishedPostsPaginated(12, $page);
         $pages = $this->pageService->getPublishedPages();
+        $categories = Category::with('subcategories')->orderBy('id', 'asc')->get();
+        $subcategories = Subcategory::active()->ordered()->get(['id', 'name', 'slug', 'category_id']);
 
-        // 3. Fetch categories list
-        $categories = Category::all();
+        $featuredPosts = $this->postService->getFeaturedPublished(5);
+        $latestPosts = $this->postService->getLatestPublished(8);
+        $groupedByCategory = $this->postService->getPublishedGroupedByCategory(4, 4);
+        $trendingPosts = $this->postService->getLatestPublished(6);
 
-        // 4. Generate SEO Metadata
         $seo = $this->seoService->generateTags(null, $locale);
         $jsonLd = $this->seoService->generateJsonLd(null, $locale);
 
-        return view('tenant.home', compact('posts', 'pages', 'categories', 'seo', 'jsonLd', 'locale'));
+        return view('tenant.home', compact(
+            'posts', 'pages', 'categories', 'subcategories',
+            'featuredPosts', 'latestPosts', 'groupedByCategory', 'trendingPosts',
+            'seo', 'jsonLd', 'locale'
+        ));
     }
 
-    /**
-     * Public Post Details view.
-     */
     public function post(string $slug, ?string $locale = null)
     {
         $locale = $locale ?: app()->getLocale();
 
-        // Fetch post (cached)
         $post = $this->postService->getPostBySlug($slug);
-
         if (!$post || $post->status !== 'published') {
             abort(404, 'Article not found.');
         }
 
-        $pages = $this->pageService->getPublishedPages();
-        $categories = Category::all();
+        $post->loadMissing(['category', 'subcategory', 'tags', 'comments']);
 
-        // Generate SEO & JSON-LD
+        $pages = $this->pageService->getPublishedPages();
+        $categories = Category::with('subcategories')->orderBy('id', 'asc')->get();
+
+        $relatedPosts = $this->postService->getRelatedPosts($post, 6);
+        $latestPosts = $this->postService->getLatestPublished(5);
+        $featuredPosts = $this->postService->getFeaturedPublished(4);
+
         $seo = $this->seoService->generateTags($post, $locale);
         $jsonLd = $this->seoService->generateJsonLd($post, $locale);
 
-        return view('tenant.post', compact('post', 'pages', 'categories', 'seo', 'jsonLd', 'locale'));
+        return view('tenant.post', compact(
+            'post', 'pages', 'categories',
+            'relatedPosts', 'latestPosts', 'featuredPosts',
+            'seo', 'jsonLd', 'locale'
+        ));
     }
 
-    /**
-     * Public Page Details view.
-     */
     public function page(string $slug, ?string $locale = null)
     {
         $locale = $locale ?: app()->getLocale();
 
-        // Fetch page (cached)
         $page = $this->pageService->getPageBySlug($slug);
-
         if (!$page || $page->status !== 'published') {
             abort(404, 'Page not found.');
         }
 
         $pages = $this->pageService->getPublishedPages();
+        $latestPosts = $this->postService->getLatestPublished(5);
+        $categories = Category::with('subcategories')->orderBy('id', 'asc')->get();
 
-        // Generate SEO
         $seo = $this->seoService->generateTags($page, $locale);
         $jsonLd = $this->seoService->generateJsonLd(null, $locale);
 
-        return view('tenant.page', compact('page', 'pages', 'seo', 'jsonLd', 'locale'));
+        return view('tenant.page', compact(
+            'page', 'pages', 'latestPosts', 'categories',
+            'seo', 'jsonLd', 'locale'
+        ));
     }
 
-    /**
-     * Public Category filtering view.
-     */
     public function category(Request $request, string $slug, ?string $locale = null)
     {
         $locale = $locale ?: app()->getLocale();
 
-        $category = Category::where('slug', $slug)->first();
-
+        $category = Category::with('subcategories')->where('slug', $slug)->first();
         if (!$category) {
             abort(404, 'Category not found.');
         }
 
         $pages = $this->pageService->getPublishedPages();
-        $categories = Category::all();
-
-        // Fetch category-specific posts (cached)
+        $categories = Category::with('subcategories')->orderBy('id', 'asc')->get();
         $pageNum = (int) $request->get('page', 1);
-        $posts = $this->postService->getPublishedPostsByCategoryPaginated($category->id, 10, $pageNum);
+        $posts = $this->postService->getPublishedPostsByCategoryPaginated($category->id, 12, $pageNum);
 
-        // Generate SEO metadata
+        $featuredPosts = $this->postService->getFeaturedPublished(5);
+        $latestPosts = $this->postService->getLatestPublished(6);
+
         $seo = $this->seoService->generateTags(null, $locale);
-        
         $siteName = \App\Services\SiteSettings::get('site_name', 'CMS Website');
         $seo['title'] = ($category->name[$locale] ?? reset($category->name)) . ' | ' . $siteName;
-
         $jsonLd = $this->seoService->generateJsonLd(null, $locale);
 
-        return view('tenant.home', compact('posts', 'pages', 'categories', 'seo', 'jsonLd', 'locale', 'category'));
+        return view('tenant.home', compact(
+            'posts', 'pages', 'categories', 'seo', 'jsonLd', 'locale',
+            'category', 'featuredPosts', 'latestPosts'
+        ));
+    }
+
+    public function subcategory(Request $request, string $slug, ?string $locale = null)
+    {
+        $locale = $locale ?: app()->getLocale();
+
+        $subcategory = Subcategory::with(['category'])->where('slug', $slug)->active()->first();
+        if (!$subcategory) {
+            abort(404, 'Subcategory not found.');
+        }
+
+        $pages = $this->pageService->getPublishedPages();
+        $categories = Category::with('subcategories')->orderBy('id', 'asc')->get();
+        $pageNum = (int) $request->get('page', 1);
+        $posts = $this->postService->getPublishedPostsBySubcategoryPaginated($subcategory->id, 12, $pageNum);
+
+        $featuredPosts = $this->postService->getFeaturedPublished(5);
+        $latestPosts = $this->postService->getLatestPublished(6);
+
+        $seo = $this->seoService->generateTags(null, $locale);
+        $siteName = \App\Services\SiteSettings::get('site_name', 'CMS Website');
+        $seo['title'] = ($subcategory->name[$locale] ?? reset($subcategory->name)) . ' | ' . $siteName;
+        $jsonLd = $this->seoService->generateJsonLd(null, $locale);
+
+        return view('tenant.home', compact(
+            'posts', 'pages', 'categories', 'seo', 'jsonLd', 'locale',
+            'subcategory', 'featuredPosts', 'latestPosts'
+        ));
     }
 }

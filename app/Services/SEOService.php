@@ -12,6 +12,27 @@ use Illuminate\Support\Str;
 class SEOService
 {
     /**
+     * Determine if a locale requires the prefixed route name.
+     */
+    private function isDefaultLocale(string $locale): bool
+    {
+        $default = SiteSettings::get('default_locale', config('app.locale', 'en'));
+        return $locale === $default;
+    }
+
+    /**
+     * Build a localized route URL (uses prefixed route only for non-default locales).
+     */
+    private function localizedRoute(string $baseName, array $params = [], string $locale): string
+    {
+        if ($this->isDefaultLocale($locale)) {
+            return route($baseName, $params);
+        }
+        $localeParams = array_merge(['locale' => $locale], $params);
+        return route($baseName . '.locale', $localeParams);
+    }
+
+    /**
      * Generate HTML Meta tags dynamically with template tag support.
      */
     public function generateTags($model, string $locale = 'en'): array
@@ -40,17 +61,17 @@ class SEOService
             $rawDescription = $postService->translate($model, 'meta_description', $locale) ?: substr(strip_tags($postService->translate($model, 'content', $locale)), 0, 160);
             $type = 'article';
             $image = $model->featured_image ? asset('storage/' . $model->featured_image) : '';
-            $url = route('tenant.post', ['slug' => $model->slug, 'locale' => $locale]);
-            $categoryName = $model->category ? ($model->category->name[$locale] ?? reset($model->category->name)) : '';
+            $url = $this->localizedRoute('tenant.post', ['slug' => $model->slug], $locale);
+            $categoryName = $model->category ? $model->category->translate('name', $locale) : '';
             $publishedAt = $model->published_at?->format('Y-m-d') ?? '';
         } elseif ($model instanceof Page) {
             $rawTitle = $pageService->translate($model, 'meta_title', $locale) ?: $pageService->translate($model, 'title', $locale);
             $rawDescription = $pageService->translate($model, 'meta_description', $locale) ?: substr(strip_tags($pageService->translate($model, 'content', $locale)), 0, 160);
-            $url = route('tenant.page', ['slug' => $model->slug, 'locale' => $locale]);
+            $url = $this->localizedRoute('tenant.page', ['slug' => $model->slug], $locale);
         } elseif ($model instanceof Category) {
-            $rawTitle = $model->name[$locale] ?? reset($model->name);
+            $rawTitle = $model->translate('name', $locale);
             $rawDescription = "Read articles in the {$rawTitle} category.";
-            $url = route('tenant.category', ['slug' => $model->slug, 'locale' => $locale]);
+            $url = $this->localizedRoute('tenant.category', ['slug' => $model->slug], $locale);
         } else {
             // General homepage or other archive
             $rawTitle = $siteName;
@@ -148,7 +169,7 @@ class SEOService
                 '@type' => 'ListItem',
                 'position' => 1,
                 'name' => 'Home',
-                'item' => route('tenant.home', ['locale' => $locale])
+                'item' => $this->localizedRoute('tenant.home', [], $locale)
             ]
         ];
 
@@ -157,29 +178,29 @@ class SEOService
                 $breadcrumbItems[] = [
                     '@type' => 'ListItem',
                     'position' => 2,
-                    'name' => $model->category->name[$locale] ?? reset($model->category->name),
-                    'item' => route('tenant.category', ['slug' => $model->category->slug, 'locale' => $locale])
+                    'name' => $model->category->translate('name', $locale),
+                    'item' => $this->localizedRoute('tenant.category', ['slug' => $model->category->slug], $locale)
                 ];
             }
             $breadcrumbItems[] = [
                 '@type' => 'ListItem',
                 'position' => count($breadcrumbItems) + 1,
                 'name' => $postService->translate($model, 'title', $locale),
-                'item' => route('tenant.post', ['slug' => $model->slug, 'locale' => $locale])
+                'item' => $this->localizedRoute('tenant.post', ['slug' => $model->slug], $locale)
             ];
         } elseif ($model instanceof Page) {
             $breadcrumbItems[] = [
                 '@type' => 'ListItem',
                 'position' => 2,
                 'name' => $pageService->translate($model, 'title', $locale),
-                'item' => route('tenant.page', ['slug' => $model->slug, 'locale' => $locale])
+                'item' => $this->localizedRoute('tenant.page', ['slug' => $model->slug], $locale)
             ];
         } elseif ($model instanceof Category) {
             $breadcrumbItems[] = [
                 '@type' => 'ListItem',
                 'position' => 2,
-                'name' => $model->name[$locale] ?? reset($model->name),
-                'item' => route('tenant.category', ['slug' => $model->slug, 'locale' => $locale])
+                'name' => $model->translate('name', $locale),
+                'item' => $this->localizedRoute('tenant.category', ['slug' => $model->slug], $locale)
             ];
         }
 
@@ -194,7 +215,7 @@ class SEOService
         if ($model instanceof Post) {
             $title = $postService->translate($model, 'title', $locale);
             $content = $postService->translate($model, 'content', $locale);
-            $url = route('tenant.post', ['slug' => $model->slug, 'locale' => $locale]);
+            $url = $this->localizedRoute('tenant.post', ['slug' => $model->slug], $locale);
             $image = $model->featured_image ? asset('storage/' . $model->featured_image) : $logoUrl;
 
             $articleSchema = [
@@ -278,8 +299,8 @@ class SEOService
         if ($faqs->count() > 0) {
             $faqElements = [];
             foreach ($faqs as $faq) {
-                $question = $faq->question[$locale] ?? reset($faq->question);
-                $answer = $faq->answer[$locale] ?? reset($faq->answer);
+                $question = $faq->translate('question', $locale);
+                $answer = $faq->translate('answer', $locale);
                 $faqElements[] = [
                     '@type' => 'Question',
                     'name' => $question,
